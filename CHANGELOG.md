@@ -17,6 +17,20 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.1.0] - 2026-10-26
+
+### Added
+
 - FastAPI application skeleton with an app factory and a lifespan-managed async database engine.
 - Health check endpoints: `GET /api/v1/health` (liveness) and `GET /api/v1/health/db` (readiness).
 - Async SQLAlchemy 2.0 setup with deterministic constraint naming and a timestamp mixin.
@@ -30,14 +44,5 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/commits/HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/xwojziarnik/job-application-tracker/releases/tag/v0.1.0
