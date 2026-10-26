@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  # Keeps the SHA-pinned actions in .github/workflows up to date (the "# vX.Y.Z" comments too).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # Python packages declared in pyproject.toml.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: deps
+    open-pull-requests-limit: 10
+    groups:
+      # Minor and patch bumps land in one PR; major bumps get their own PRs for review.
+      python-minor-and-patch:
+        update-types: [minor, patch]
