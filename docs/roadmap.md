@@ -1,0 +1,98 @@
+# Roadmap
+
+Working plan with progress. Decisions referenced as `D-XX` are in
+[`decisions.md`](decisions.md); released changes are in [`../CHANGELOG.md`](../CHANGELOG.md).
+
+**Way of working (from stage 2):** the project owner writes the code; Claude plans, explains
+concepts and reviews (security, clean code, `pip-audit`), and writes code only when asked.
+
+## Status
+
+| Stage | Scope | Status |
+|---|---|---|
+| 1 | Project skeleton, Docker, migrations, CI, security scanning, automated releases | Done (v0.1.0) |
+| 2 | Companies, job offers with tags, applications | **In progress** |
+| 3 | Status workflow with history, timeline, filtering and search | Planned |
+| 4 | JWT authentication | Planned |
+| 5 | Statistics (funnel, job board effectiveness, response times) | Planned |
+| 6 | Follow-up reminders, CSV export, deployment | Planned |
+
+## Stage 2: companies, job offers, applications
+
+**Goal:** through the API, add a company, a job offer (with tags) and an application to that
+offer, then list, filter, edit and delete them according to the decisions.
+
+**Approach:** vertical slices. Each entity goes from model to endpoint and tests in one
+small PR; the first slice (Company) sets the patterns for the rest.
+
+### Step 0: Preparation
+
+**0.1 Design decisions**: done (2026-10-26), D-01 to D-16.
+
+- [x] Primary keys, enums, money, deleting, uniqueness, cardinality (D-01 to D-06)
+- [x] Transactions, pagination, tags, company creation, dates, test isolation (D-07 to D-12)
+- [x] Error format, enum values, seniority, application statuses (D-13 to D-16)
+
+**0.2 Shared building blocks and test infrastructure**: next. Branch:
+`feat/test-db-setup`.
+
+Suggested order (test infrastructure first, so the rest can be tested on a real database):
+
+- [ ] **Test database per test (D-12):** migrate a template database once per session with
+  `alembic upgrade head`; clone it for each test with `CREATE DATABASE ... TEMPLATE ...`;
+  drop it afterwards. Close all connections to the template after migrating, and dispose
+  each test's engine before dropping its database. Unique database names per test.
+  Done when: a test saves a row and the next test does not see it.
+- [ ] **Unified error format (D-13):** handlers for `DomainError`, `RequestValidationError`,
+  `HTTPException` and unexpected exceptions (`500`, generic message, details only in logs);
+  new `ConflictError` (`409`); validation details without the rejected input; update
+  `/health/db` and its test to the new format.
+- [ ] **Pagination (D-08):** shared query parameters (`limit` default 20, max 100, `offset`)
+  and response shape (`items`, `total`, `limit`, `offset`); deterministic sort order.
+- [ ] **Primary key mixin (D-01):** UUID v4 in `db/base.py`, next to `TimestampMixin`.
+- [ ] **Transaction handling (D-07):** repositories `add` and `flush` only; services commit
+  and map `IntegrityError` to domain errors.
+- [ ] CHANGELOG entries, review, merge.
+
+### Step 1: Company (pattern-setting slice)
+
+- [ ] Decide required/optional fields and PATCH `null` semantics (see "Deferred to each
+  model" in `decisions.md`).
+- [ ] Model with `is_active` (D-04), unique index on `lower(name)` (D-05).
+- [ ] Migration (review the expression index by hand).
+- [ ] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
+- [ ] Repository and service; inactive companies hidden by default.
+- [ ] Idempotent "get or create company by name"; inactive company → `409 company_inactive`
+  (D-10).
+- [ ] Endpoints: list (search, pagination, include inactive), create, get, update.
+  No delete (D-04).
+- [ ] Tests: happy paths, 404, 409, 422, pagination limit.
+
+### Step 2: JobOffer + Tag
+
+- [ ] Decide required/optional fields and PATCH semantics.
+- [ ] Model: company FK `RESTRICT` (D-04), source (D-14), seniority (D-15), work mode,
+  salary `int` B2B net per month + currency, optional (D-03), `CHECK salary_min <= salary_max`.
+- [ ] Normalised, unique offer URL (D-05).
+- [ ] Tags: many-to-many, free and normalised (D-09), `INSERT ... ON CONFLICT DO NOTHING`.
+- [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
+- [ ] Async relationships loaded explicitly (`selectinload`; consider `lazy="raise"`).
+- [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
+  values, tag, salary), `GET /tags`. Deleting an offer cascades to its applications (D-04).
+- [ ] Tests.
+
+### Step 3: Application
+
+- [ ] Decide required/optional fields and PATCH semantics.
+- [ ] Model: offer FK `CASCADE`, status (D-16), sent date as `DATE` (D-11).
+- [ ] Partial unique index: one active application per offer (D-06, D-16).
+- [ ] Status set on creation, not editable through `PATCH` (workflow comes in stage 3).
+- [ ] Validation: sent date not in the future (in `Europe/Warsaw`), not before the offer's
+  posting date (D-11).
+- [ ] Endpoints with filters, allow-listed sorting, nested offer and company without N+1.
+- [ ] Tests.
+
+### Step 4: Close the stage
+
+- [ ] CHANGELOG, README (endpoint table, roadmap), review, `pip-audit`.
+- [ ] Merge with `[minor]` → v0.2.0 (or release after each slice).

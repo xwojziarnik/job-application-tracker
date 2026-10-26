@@ -17,6 +17,8 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- Docker Compose override for development: mounted sources and live reload.
+
 ### Changed
 
 ### Deprecated
@@ -26,6 +28,9 @@ the new version section, updates the links below and tags the commit.
 ### Fixed
 
 ### Security
+
+- Docker Compose publishes the API and database ports on `127.0.0.1` only
+  (configurable with `BIND_HOST`), so they are not reachable from the local network.
 
 ## [0.1.0] - 2026-10-26
 

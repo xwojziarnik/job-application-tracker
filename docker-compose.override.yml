@@ -1,0 +1,16 @@
+# Local development overrides, merged automatically by `docker compose up`.
+# The production image (Dockerfile) runs without --reload and without mounted code.
+# To run the production setup locally: docker compose -f docker-compose.yml up
+services:
+  api:
+    # --app-dir src puts the mounted sources ahead of the copy installed in the image.
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn job_tracker.main:app --host 0.0.0.0 --port 8000
+      --app-dir src --reload --reload-dir src"
+    environment:
+      ENVIRONMENT: local
+      DEBUG: "true"
+    volumes:
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations:ro
