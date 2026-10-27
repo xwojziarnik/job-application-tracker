@@ -2,6 +2,7 @@ import asyncio
 import os
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
+from uuid import uuid4
 
 import docker
 import pytest
@@ -82,24 +83,34 @@ async def db_client(postgres_url: str) -> AsyncIterator[AsyncClient]:
         yield c
 
 
+async def _run_admin_sql(postgres_url: str, sql_command: str) -> None:
+    """Run a statement such as CREATE or DROP DATABASE on the server.
+
+    It connects to the always-present "postgres" database, because a database cannot be
+    created before it exists, nor dropped while connected to it. AUTOCOMMIT is required:
+    CREATE and DROP DATABASE cannot run inside a transaction. The engine is disposed
+    right away, so no connection is left open (a template with open connections cannot
+    be cloned).
+    """
+    admin_url = make_url(postgres_url).set(database="postgres")
+    engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text(sql_command))
+    finally:
+        await engine.dispose()
+
+
 @pytest.fixture(scope="session")
 async def template_db(postgres_url: str, alembic_ini: Path) -> AsyncIterator[str]:
-    """A throwaway PostgreSQL database created from the template database."""
-    base_url = make_url(postgres_url)
-
-    # 1. Create the database from the always-present "postgres" database.
-    #    CREATE DATABASE cannot run inside a transaction, hence AUTOCOMMIT.
-    admin_engine = create_async_engine(
-        base_url.set(database="postgres"), isolation_level="AUTOCOMMIT"
-    )
-    async with admin_engine.connect() as conn:
-        # The name is our own constant, so formatting it into SQL is safe.
-        await conn.execute(text(f'CREATE DATABASE "{TEMPLATE_DB_NAME}"'))
-    await admin_engine.dispose()
+    """Empty database migrated to the latest schema; cloned for every test."""
+    # 1. Create the database. The name is our own constant, so formatting it
+    #    into SQL is safe.
+    await _run_admin_sql(postgres_url, f'CREATE DATABASE "{TEMPLATE_DB_NAME}"')
 
     # 2. Point Alembic at the new database. Alembic needs a string with the
     #    real password; str(url) would mask it as "***".
-    template_url = base_url.set(database=TEMPLATE_DB_NAME)
+    template_url = make_url(postgres_url).set(database=TEMPLATE_DB_NAME)
     config = Config(str(alembic_ini))
     config.set_main_option("sqlalchemy.url", template_url.render_as_string(hide_password=False))
 
@@ -107,3 +118,15 @@ async def template_db(postgres_url: str, alembic_ini: Path) -> AsyncIterator[str
     #    fixture's event loop, so run Alembic in a separate thread.
     await asyncio.to_thread(command.upgrade, config, "head")
     yield TEMPLATE_DB_NAME
+
+
+@pytest.fixture(scope="function")
+async def test_db_url(postgres_url: str, template_db: str) -> AsyncIterator[str]:
+    """A throwaway PostgreSQL database created from the template database."""
+    new_db_name = f"test_{uuid4().hex}"
+
+    await _run_admin_sql(postgres_url, f'CREATE DATABASE "{new_db_name}" TEMPLATE "{template_db}"')
+
+    yield make_url(postgres_url).set(database=new_db_name).render_as_string(hide_password=False)
+
+    await _run_admin_sql(postgres_url, f'DROP DATABASE "{new_db_name}" WITH (FORCE)')
