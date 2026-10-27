@@ -17,8 +17,6 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
-- Docker Compose override for development: mounted sources and live reload.
-
 ### Changed
 
 ### Deprecated
@@ -26,6 +24,14 @@ the new version section, updates the links below and tags the commit.
 ### Removed
 
 ### Fixed
+
+### Security
+
+## [0.1.1] - 2026-10-27
+
+### Added
+
+- Docker Compose override for development: mounted sources and live reload.
 
 ### Security
 
@@ -49,5 +55,6 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/xwojziarnik/job-application-tracker/releases/tag/v0.1.0
