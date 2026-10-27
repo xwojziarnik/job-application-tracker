@@ -43,6 +43,17 @@ docker compose up --build
 
 Migrations run automatically when the `api` container starts. If ports 8000 or 5432 are
 already taken, set `API_PORT` / `DB_PORT` in `.env`.
+Ports are published on `127.0.0.1` only, so the API and the database are not reachable
+from other machines on the network.
+
+`docker compose up` also loads [`docker-compose.override.yml`](docker-compose.override.yml),
+which is meant for development: it mounts `src/` and `migrations/` into the container and
+runs uvicorn with `--reload`, so code changes apply without rebuilding the image. To run the
+production configuration (no reload, no mounted code):
+
+```bash
+docker compose -f docker-compose.yml up --build
+```
 
 ## Local development
 
@@ -69,6 +80,7 @@ Settings are read from environment variables or a `.env` file
 | `DEBUG`         | `false`                                                       | FastAPI debug mode                                |
 | `DATABASE_URL`  | `postgresql+asyncpg://tracker:tracker@localhost:5432/tracker` | Async SQLAlchemy URL; **required in production**  |
 | `DATABASE_ECHO` | `false`                                                       | Log SQL statements                                |
+| `BIND_HOST`     | `127.0.0.1`                                                   | Host interface for published ports (Docker Compose only) |
 | `API_PORT`      | `8000`                                                        | Host port for the API (Docker Compose only)       |
 | `DB_PORT`       | `5432`                                                        | Host port for PostgreSQL (Docker Compose only)    |
 
