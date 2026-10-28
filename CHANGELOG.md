@@ -18,14 +18,26 @@ the new version section, updates the links below and tags the commit.
 ### Added
 
 - Docker Compose override for development: mounted sources and live reload.
+- Domain errors `ConflictError` (`409`, `conflict`), `ServiceUnavailableError` (`503`,
+  `service_unavailable`) and `DatabaseUnavailableError` (`503`, `database_unavailable`).
+- Default messages for domain errors, so they can be raised without a message.
+- Server-side domain errors (`5xx`) are logged with their traceback and original cause;
+  the response contains only the error code and message.
 
 ### Changed
+
+- `GET /api/v1/health/db` returns errors in the shared format:
+  `{"error": {"code": "database_unavailable", "message": "Database unavailable"}}`
+  instead of `{"detail": "Database unavailable"}`.
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- Running migrations inside the application's process no longer disables the
+  application's loggers.
 
 ### Security
 

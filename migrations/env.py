@@ -10,7 +10,9 @@ from job_tracker.models import Base
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Keep loggers that already exist: when migrations run inside the application's
+    # process (e.g. the test fixtures), the default would silence the app's loggers.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
