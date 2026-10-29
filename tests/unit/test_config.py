@@ -13,6 +13,7 @@ def isolated_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     # Keep the developer's shell and .env file out of these tests.
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
+    monkeypatch.delenv("DEBUG", raising=False)
     monkeypatch.chdir(tmp_path)
 
 
@@ -34,3 +35,18 @@ def test_production_accepts_database_url_from_environment(
 
 def test_local_falls_back_to_default_database_url() -> None:
     assert Settings().database_url.startswith("postgresql+asyncpg://")
+
+
+def test_production_with_debug_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("DATABASE_URL", PRODUCTION_DB_URL)
+    monkeypatch.setenv("DEBUG", "true")
+
+    with pytest.raises(ValidationError, match="DEBUG must not be enabled in production"):
+        Settings()
+
+
+def test_local_allows_debug(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEBUG", "true")
+
+    assert Settings().debug is True

@@ -52,6 +52,8 @@ the new version section, updates the links below and tags the commit.
 ### Security
 
 - Request validation errors no longer echo the rejected input back in the response.
+- The application refuses to start in production with `DEBUG` enabled, which would answer
+  unhandled exceptions with a traceback page instead of the generic error response.
 - Docker Compose publishes the API and database ports on `127.0.0.1` only
   (configurable with `BIND_HOST`), so they are not reachable from the local network.
 
