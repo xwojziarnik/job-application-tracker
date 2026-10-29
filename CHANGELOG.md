@@ -36,6 +36,9 @@ the new version section, updates the links below and tags the commit.
 - Request validation errors (`422`) use the shared error format with the code
   `validation_error` and one `details` entry per invalid field. `field` is the path to the
   value without its source (`tags.1.name`, `limit`), or `body` for invalid JSON.
+- Unhandled exceptions return `500` in the shared error format with the code
+  `internal_server_error` (the same code as an explicit `HTTPException(500)`) instead of a
+  plain-text body. The exception is logged with its traceback, the request method and path.
 
 ### Deprecated
 

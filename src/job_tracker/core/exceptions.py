@@ -204,8 +204,31 @@ async def validation_error_handler(_: Request, exception: Exception) -> JSONResp
     )
 
 
+async def unhandled_exception_handler(request: Request, exception: Exception) -> JSONResponse:
+    """Render any unhandled exception as 500 in the shared error format.
+
+    The original exception is logged with its traceback and the request it failed on,
+    but the client only gets a generic message. The code matches the one derived for an
+    explicit ``HTTPException(500)``, so clients see one code for this status.
+
+    Registered for ``Exception``, which Starlette runs in its outermost middleware, so it
+    catches everything the other handlers do not, including ``ResponseValidationError``.
+    Starlette re-raises the exception after sending the response so that the server can
+    log it as well; with ``debug=True`` it shows its traceback page instead of this one.
+    """
+    logger.error(
+        "Unhandled exception on %s %s", request.method, request.url.path, exc_info=exception
+    )
+    return error_response(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        code="internal_server_error",
+        message="Internal server error",
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register the error handlers on ``app``, replacing FastAPI's defaults."""
     app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
