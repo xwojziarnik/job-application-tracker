@@ -17,7 +17,27 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- Domain errors `ConflictError` (`409`, `conflict`), `ServiceUnavailableError` (`503`,
+  `service_unavailable`) and `DatabaseUnavailableError` (`503`, `database_unavailable`).
+- Default messages for domain errors, so they can be raised without a message.
+- Server-side domain errors (`5xx`) are logged with their traceback and original cause;
+  the response contains only the error code and message.
+
 ### Changed
+
+- `GET /api/v1/health/db` returns errors in the shared format:
+  `{"error": {"code": "database_unavailable", "message": "Database unavailable"}}`
+  instead of `{"detail": "Database unavailable"}`.
+- HTTP errors, including `404` for unknown routes and `405` for unsupported methods, use
+  the shared error format. The `code` is derived from the status phrase (`not_found`,
+  `method_not_allowed`, `too_many_requests`, ...; `http_error` for non-standard statuses),
+  headers such as `Allow` are kept, and a non-string `detail` is not exposed.
+- Request validation errors (`422`) use the shared error format with the code
+  `validation_error` and one `details` entry per invalid field. `field` is the path to the
+  value without its source (`tags.1.name`, `limit`), or `body` for invalid JSON.
+- Unhandled exceptions return `500` in the shared error format with the code
+  `internal_server_error` (the same code as an explicit `HTTPException(500)`) instead of a
+  plain-text body. The exception is logged with its traceback, the request method and path.
 
 ### Deprecated
 
@@ -25,7 +45,14 @@ the new version section, updates the links below and tags the commit.
 
 ### Fixed
 
+- Running migrations inside the application's process no longer disables the
+  application's loggers.
+
 ### Security
+
+- Request validation errors no longer echo the rejected input back in the response.
+- The application refuses to start in production with `DEBUG` enabled, which would answer
+  unhandled exceptions with a traceback page instead of the generic error response.
 
 ## [0.1.1] - 2026-10-27
 

@@ -27,23 +27,25 @@ small PR; the first slice (Company) sets the patterns for the rest.
 
 ### Step 0: Preparation
 
-**0.1 Design decisions**: done (2026-10-26), D-01 to D-16.
+**0.1 Design decisions**: done (2026-10-26), D-01 to D-16; D-17 added while implementing
+the error format (2026-10-29).
 
 - [x] Primary keys, enums, money, deleting, uniqueness, cardinality (D-01 to D-06)
 - [x] Transactions, pagination, tags, company creation, dates, test isolation (D-07 to D-12)
 - [x] Error format, enum values, seniority, application statuses (D-13 to D-16)
 
-**0.2 Shared building blocks and test infrastructure**: next. Branch:
-`feat/test-db-setup`.
+**0.2 Shared building blocks and test infrastructure**: in progress, in two pull requests:
+the test database and the error format on `feat/stage2-foundations`; pagination, the
+primary key mixin and transaction handling on a follow-up branch.
 
 Suggested order (test infrastructure first, so the rest can be tested on a real database):
 
-- [ ] **Test database per test (D-12):** migrate a template database once per session with
+- [x] **Test database per test (D-12):** migrate a template database once per session with
   `alembic upgrade head`; clone it for each test with `CREATE DATABASE ... TEMPLATE ...`;
   drop it afterwards. Close all connections to the template after migrating, and dispose
   each test's engine before dropping its database. Unique database names per test.
   Done when: a test saves a row and the next test does not see it.
-- [ ] **Unified error format (D-13):** handlers for `DomainError`, `RequestValidationError`,
+- [x] **Unified error format (D-13, D-17):** handlers for `DomainError`, `RequestValidationError`,
   `HTTPException` and unexpected exceptions (`500`, generic message, details only in logs);
   new `ConflictError` (`409`); validation details without the rejected input; update
   `/health/db` and its test to the new format.
@@ -52,7 +54,7 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [ ] **Primary key mixin (D-01):** UUID v4 in `db/base.py`, next to `TimestampMixin`.
 - [ ] **Transaction handling (D-07):** repositories `add` and `flush` only; services commit
   and map `IntegrityError` to domain errors.
-- [ ] CHANGELOG entries, review, merge.
+- [ ] CHANGELOG entries, review, merge (after each of the two pull requests).
 
 ### Step 1: Company (pattern-setting slice)
 
