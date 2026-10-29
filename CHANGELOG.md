@@ -33,6 +33,9 @@ the new version section, updates the links below and tags the commit.
   the shared error format. The `code` is derived from the status phrase (`not_found`,
   `method_not_allowed`, `too_many_requests`, ...; `http_error` for non-standard statuses),
   headers such as `Allow` are kept, and a non-string `detail` is not exposed.
+- Request validation errors (`422`) use the shared error format with the code
+  `validation_error` and one `details` entry per invalid field. `field` is the path to the
+  value without its source (`tags.1.name`, `limit`), or `body` for invalid JSON.
 
 ### Deprecated
 
@@ -45,6 +48,7 @@ the new version section, updates the links below and tags the commit.
 
 ### Security
 
+- Request validation errors no longer echo the rejected input back in the response.
 - Docker Compose publishes the API and database ports on `127.0.0.1` only
   (configurable with `BIND_HOST`), so they are not reachable from the local network.
 

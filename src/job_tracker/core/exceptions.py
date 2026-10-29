@@ -11,8 +11,10 @@ from collections.abc import Mapping
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from pydantic_core import ErrorDetails
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
@@ -164,7 +166,46 @@ async def http_exception_handler(_: Request, exception: Exception) -> JSONRespon
     )
 
 
+def _error_detail(error: ErrorDetails) -> ErrorDetail:
+    """Turn one error from ``RequestValidationError.errors()`` into an ``ErrorDetail``.
+
+    ``field`` is the location without its source (``body``, ``query``, ``path``), joined
+    with dots: ``("body", "tags", 1, "name")`` -> ``tags.1.name``. The source itself is
+    used when nothing else is left (an error on the whole model) and for invalid JSON,
+    whose location is only a character position. ``message`` is Pydantic's message
+    without the ``"Value error, "`` prefix it adds to errors from custom validators.
+    The rejected input and the error context are left out.
+    """
+    source, *path = error["loc"]
+    if error["type"] == "json_invalid" or not path:
+        field = str(source)
+    else:
+        field = ".".join(str(part) for part in path)
+    return ErrorDetail(field=field, message=error["msg"].removeprefix("Value error, "))
+
+
+async def validation_error_handler(_: Request, exception: Exception) -> JSONResponse:
+    """Render a ``RequestValidationError`` as 422 in the shared error format.
+
+    FastAPI raises it when the body, query, path or header parameters of a request do not
+    match their declared types. Each error becomes one entry in ``details``; the rejected
+    input is never sent back.
+    """
+    from fastapi.exceptions import RequestValidationError
+
+    if not isinstance(exception, RequestValidationError):
+        raise exception
+    details = [_error_detail(error) for error in exception.errors()]
+    return error_response(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        code="validation_error",
+        message="Request validation failed",
+        details=details,
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register the error handlers on ``app``, replacing FastAPI's defaults."""
     app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_error_handler)
