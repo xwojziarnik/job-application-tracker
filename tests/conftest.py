@@ -78,8 +78,9 @@ async def client(unreachable_db_settings: Settings) -> AsyncIterator[AsyncClient
 
 
 @pytest.fixture
-async def db_client(postgres_url: str) -> AsyncIterator[AsyncClient]:
-    async for c in _client_for(create_app(make_settings(postgres_url))):
+async def db_client(test_db_url: str) -> AsyncIterator[AsyncClient]:
+    """Client for the app connected to this test's own database (D-12)."""
+    async for c in _client_for(create_app(make_settings(test_db_url))):
         yield c
 
 

@@ -24,10 +24,11 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-10 | Creating a company together with an offer | Accepted | `company_id` only; separate idempotent get-or-create company |
 | D-11 | Dates, times and time zones               | Accepted | UTC `TIMESTAMPTZ` for events, `DATE` for calendar days |
 | D-12 | Test database isolation                   | Accepted | Separate database per test, cloned from a migrated template |
-| D-13 | Error response format                     | Accepted | One format for all errors, incl. validation and `HTTPException` |
+| D-13 | Error response format                     | Accepted (details refined by D-17) | One format for all errors, incl. validation and `HTTPException` |
 | D-14 | Allowed values of enumerations            | Accepted (seniority superseded by D-15) | Sources, seniority range, work mode, currencies (see entry) |
 | D-15 | Seniority as one combined value           | Accepted | Single field: `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` |
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
+| D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
 
 ---
 
@@ -503,7 +504,8 @@ Running migrations once also tests them.
 
 ## D-13: Error response format
 
-**Status:** Accepted (2026-10-26)
+**Status:** Accepted (2026-10-26); refined by D-17, which replaces the `internal_error`
+code with `internal_server_error`
 
 **Context.** Out of the box the API returns errors in three shapes: domain errors
 (`{"error": {...}}`), `HTTPException` (`{"detail": "..."}`) and validation errors
@@ -658,6 +660,66 @@ the same offer (D-06).
   are decided in stage 3, together with the status history.
 - In stage 2 the status is set on creation and is not editable through `PATCH`
   (see the stage 2 roadmap).
+
+---
+
+## D-17: Error format details
+
+**Status:** Accepted (2026-10-29). Refines D-13 and replaces its `internal_error` code.
+
+**Context.** D-13 fixed the shape of every error response. Implementing the handlers raised
+questions it left open: what to send when there are no details, how to name a field in a
+validation error, which codes to give errors that come from the framework rather than from
+our own domain errors, and how to keep the original cause of an error without exposing it.
+
+| Question | Options considered | Choice |
+|---|---|---|
+| No field-level details | omit the key; `"details": null`; `"details": []` | Omit the key |
+| Name of an invalid field | `salary_max`; `body.salary_max` (with source) | Path without its source |
+| Unreachable database | generic `service_unavailable`; dedicated code | Dedicated `database_unavailable` |
+| Code of an `HTTPException` | always `http_error`; derived from the status | Derived from the status |
+| Code of an unexpected error (500) | `internal_error` (D-13); `internal_server_error` | `internal_server_error` |
+
+**Decision.**
+
+- **`details` is omitted** when there are no field-level details; it is never `null` or an
+  empty list.
+- **Field path:** the location of the invalid value without its source (`body`, `query`,
+  `path`, `header`), joined with dots: `tags.1.name`, `salary_max`, `limit`. When nothing is
+  left after removing the source (an error on the whole model) and for invalid JSON (whose
+  location is only a character position), the field is the source itself, e.g. `body`.
+  The `"Value error, "` prefix Pydantic adds to errors from custom validators is removed.
+- **Domain errors form categories:** a category (`NotFoundError` 404, `ConflictError` 409,
+  `ServiceUnavailableError` 503) defines the status, a code and a default message; a
+  specific error (e.g. `CompanyInactiveError`, `DatabaseUnavailableError`) inherits the
+  status and overrides the code. The status says what kind of error it is, the code which
+  one exactly.
+- **`HTTPException` codes are derived from the status phrase** in snake_case: `not_found`,
+  `method_not_allowed`, `too_many_requests`; `http_error` for a status outside the standard.
+  A string `detail` becomes the message; any other `detail` is not exposed. Headers such as
+  `Allow` (405) and `WWW-Authenticate` (401) are kept.
+- **Unexpected exceptions return `internal_server_error`**, the same code an explicit
+  `HTTPException(500)` gets, so a status never has two codes.
+- **Logging:** server-side errors (domain errors with a 5xx status and unexpected
+  exceptions) are logged with the traceback, including the original cause chained with
+  `raise ... from`; unexpected exceptions also with the request method and path (without
+  the query string). Client errors (4xx) are not logged.
+
+**Rationale.** Clients branch on `code` alone, so every distinct situation needs its own
+stable code, and one status must not have two codes. Leaving out the source of a field
+keeps the codes and paths short; a client knows from the endpoint what is in the body and
+what in the query. Logging the cause keeps errors diagnosable while the response stays free
+of internal details.
+
+**Consequences.**
+- Codes derived from status phrases depend on the Python version: Python 3.13 renamed some
+  phrases after RFC 9110 (e.g. 422 is now "Unprocessable Content"). If a code must stay
+  fixed, override it with an explicit mapping for that status.
+- Messages of custom validators must describe the rule, not the value: anything placed in
+  the message is sent to the client.
+- Starlette re-raises an unexpected exception after the 500 response is sent, so the server
+  logs it a second time; with `debug=True` it shows its own traceback page instead of the
+  handler's response.
 
 ---
 
