@@ -29,6 +29,10 @@ the new version section, updates the links below and tags the commit.
 - `GET /api/v1/health/db` returns errors in the shared format:
   `{"error": {"code": "database_unavailable", "message": "Database unavailable"}}`
   instead of `{"detail": "Database unavailable"}`.
+- HTTP errors, including `404` for unknown routes and `405` for unsupported methods, use
+  the shared error format. The `code` is derived from the status phrase (`not_found`,
+  `method_not_allowed`, `too_many_requests`, ...; `http_error` for non-standard statuses),
+  headers such as `Allow` are kept, and a non-string `detail` is not exposed.
 
 ### Deprecated
 

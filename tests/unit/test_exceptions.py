@@ -2,8 +2,9 @@ import json
 import logging
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import Response
 
 from job_tracker.core.exceptions import (
@@ -162,3 +163,119 @@ async def test_client_side_domain_error_is_not_logged(caplog: pytest.LogCaptureF
         await _get_error(NotFoundError())
 
     assert caplog.records == []
+
+
+# --- HTTPException (D-13): every HTTP error uses the shared format -----------------------
+
+
+def _http_app() -> FastAPI:
+    """Minimal app with routes that raise HTTPException in various ways."""
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get("/items")
+    async def list_items() -> list[str]:
+        return []
+
+    @app.get("/forbidden")
+    async def forbidden() -> None:
+        raise HTTPException(status_code=403, detail="You cannot access this resource")
+
+    @app.get("/unauthorized")
+    async def unauthorized() -> None:
+        raise HTTPException(
+            status_code=401, detail="Not authenticated", headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    @app.get("/rate-limited")
+    async def rate_limited() -> None:
+        raise HTTPException(status_code=429)
+
+    @app.get("/structured-detail")
+    async def structured_detail() -> None:
+        raise HTTPException(status_code=400, detail={"internal": "do-not-leak"})
+
+    @app.get("/teapot")
+    async def teapot() -> None:
+        raise HTTPException(status_code=418)
+
+    @app.get("/non-standard-status")
+    async def non_standard_status() -> None:
+        raise HTTPException(status_code=499, detail="Client closed request")
+
+    @app.get("/starlette")
+    async def starlette_error() -> None:
+        raise StarletteHTTPException(status_code=409, detail="Raised by Starlette")
+
+    return app
+
+
+async def _request(method: str, path: str) -> tuple[int, object, dict[str, str]]:
+    async with AsyncClient(transport=ASGITransport(app=_http_app()), base_url="http://test") as c:
+        response = await c.request(method, path)
+    return response.status_code, response.json(), dict(response.headers)
+
+
+async def test_unknown_route_returns_not_found_in_shared_format() -> None:
+    status_code, body, _ = await _request("GET", "/does-not-exist")
+
+    assert status_code == 404
+    assert body == {"error": {"code": "not_found", "message": "Not Found"}}
+
+
+async def test_wrong_method_returns_method_not_allowed_with_allow_header() -> None:
+    status_code, body, headers = await _request("DELETE", "/items")
+
+    assert status_code == 405
+    assert body == {"error": {"code": "method_not_allowed", "message": "Method Not Allowed"}}
+    assert headers["allow"] == "GET"
+
+
+async def test_http_exception_detail_becomes_the_message() -> None:
+    status_code, body, _ = await _request("GET", "/forbidden")
+
+    assert status_code == 403
+    assert body == {"error": {"code": "forbidden", "message": "You cannot access this resource"}}
+
+
+async def test_http_exception_headers_are_preserved() -> None:
+    status_code, body, headers = await _request("GET", "/unauthorized")
+
+    assert status_code == 401
+    assert body == {"error": {"code": "unauthorized", "message": "Not authenticated"}}
+    assert headers["www-authenticate"] == "Bearer"
+
+
+async def test_code_is_derived_from_the_status_phrase() -> None:
+    status_code, body, _ = await _request("GET", "/rate-limited")
+
+    assert status_code == 429
+    assert body == {"error": {"code": "too_many_requests", "message": "Too Many Requests"}}
+
+
+async def test_non_string_detail_is_not_exposed() -> None:
+    status_code, body, _ = await _request("GET", "/structured-detail")
+
+    assert status_code == 400
+    assert body == {"error": {"code": "bad_request", "message": "HTTP error"}}
+
+
+async def test_starlette_http_exception_is_handled_too() -> None:
+    status_code, body, _ = await _request("GET", "/starlette")
+
+    assert status_code == 409
+    assert body == {"error": {"code": "conflict", "message": "Raised by Starlette"}}
+
+
+async def test_code_contains_only_lowercase_letters_digits_and_underscores() -> None:
+    status_code, body, _ = await _request("GET", "/teapot")
+
+    assert status_code == 418
+    assert body == {"error": {"code": "i_m_a_teapot", "message": "I'm a Teapot"}}
+
+
+async def test_status_without_standard_phrase_falls_back_to_http_error() -> None:
+    status_code, body, _ = await _request("GET", "/non-standard-status")
+
+    assert status_code == 499
+    assert body == {"error": {"code": "http_error", "message": "Client closed request"}}
