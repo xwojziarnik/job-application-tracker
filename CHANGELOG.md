@@ -17,7 +17,6 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
-- Docker Compose override for development: mounted sources and live reload.
 - Domain errors `ConflictError` (`409`, `conflict`), `ServiceUnavailableError` (`503`,
   `service_unavailable`) and `DatabaseUnavailableError` (`503`, `database_unavailable`).
 - Default messages for domain errors, so they can be raised without a message.
@@ -54,6 +53,15 @@ the new version section, updates the links below and tags the commit.
 - Request validation errors no longer echo the rejected input back in the response.
 - The application refuses to start in production with `DEBUG` enabled, which would answer
   unhandled exceptions with a traceback page instead of the generic error response.
+
+## [0.1.1] - 2026-10-27
+
+### Added
+
+- Docker Compose override for development: mounted sources and live reload.
+
+### Security
+
 - Docker Compose publishes the API and database ports on `127.0.0.1` only
   (configurable with `BIND_HOST`), so they are not reachable from the local network.
 
@@ -74,5 +82,6 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/xwojziarnik/job-application-tracker/releases/tag/v0.1.0
