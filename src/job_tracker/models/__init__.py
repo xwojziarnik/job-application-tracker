@@ -4,5 +4,6 @@ Import every model module here, so `Base.metadata` is complete for Alembic.
 """
 
 from job_tracker.db.base import Base
+from job_tracker.models.company import Company
 
-__all__ = ["Base"]
+__all__ = ["Base", "Company"]

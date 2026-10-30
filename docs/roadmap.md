@@ -67,10 +67,10 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 
 - [x] Decide required/optional fields and PATCH `null` semantics (see "Deferred to each
   model" → "Company" in `decisions.md`).
-- [ ] Model with `UUIDPrimaryKeyMixin`, `TimestampMixin` and `is_active` (D-04); unique
+- [x] Model with `UUIDPrimaryKeyMixin`, `TimestampMixin` and `is_active` (D-04); unique
   index on `lower(name)` (D-05). Name the expression index explicitly (the naming
   convention does not name indexes on expressions): the service maps that name to `409`.
-- [ ] Migration (review the expression index by hand).
+- [x] Migration (review the expression index by hand).
 - [ ] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
 - [ ] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
   `created_at` then `id`) and service (commits, maps the unique index violation to
