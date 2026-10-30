@@ -732,3 +732,24 @@ when made:
   schemas).
 - **PATCH semantics**: an omitted field means "do not change"; whether `null` clears a field
   and which fields may be cleared is decided per field.
+
+### Company (2026-10-30)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `name` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming; unique case-insensitively (D-05) |
+| `website` | http(s) URL, up to 2048 characters | no | Validated as an `http`/`https` URL; not unique |
+| `location` | text, up to 200 characters | no | Headquarters (city, country); where the job is done belongs to the offer |
+| `industry` | text, up to 100 characters | no | Free text, e.g. `fintech` |
+| `notes` | text, up to 2000 characters | no | Free notes |
+| `is_active` | boolean | set by the app | `true` on creation; changed only through `PATCH` (D-04) |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Blank text in optional fields** (empty or only whitespace) is stored as `null`, so
+  "no value" has one representation. All text fields are trimmed.
+- **Create** (`POST`) accepts `name`, `website`, `location`, `industry` and `notes`; a new
+  company is always active.
+- **Update** (`PATCH`): an omitted field is not changed. `null` (or blank text) clears an
+  optional field; `null` for `name` or `is_active` is rejected with `422`.
+- **Read** returns every field above.
