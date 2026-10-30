@@ -17,20 +17,6 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
-## [0.1.2] - 2026-10-29
-
-### Added
-
 - Domain errors `ConflictError` (`409`, `conflict`), `ServiceUnavailableError` (`503`,
   `service_unavailable`) and `DatabaseUnavailableError` (`503`, `database_unavailable`).
 - Default messages for domain errors, so they can be raised without a message.
@@ -52,6 +38,10 @@ the new version section, updates the links below and tags the commit.
 - Unhandled exceptions return `500` in the shared error format with the code
   `internal_server_error` (the same code as an explicit `HTTPException(500)`) instead of a
   plain-text body. The exception is logged with its traceback, the request method and path.
+
+### Deprecated
+
+### Removed
 
 ### Fixed
 
@@ -92,7 +82,6 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.2...HEAD
-[0.1.2]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...v0.1.2
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/xwojziarnik/job-application-tracker/releases/tag/v0.1.0
