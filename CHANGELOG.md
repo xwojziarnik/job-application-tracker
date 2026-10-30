@@ -17,7 +17,17 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- `companies` table: name (unique regardless of case), website, location, industry, notes
+  and an `is_active` flag; companies are deactivated instead of deleted.
+- Test that fails when the models and the migrations differ.
+- Company schemas for creating, updating and reading a company: text is trimmed, blank
+  optional text is stored as empty, `website` must be an `https` URL, and unknown fields
+  (including `id`, `is_active` on creation and the timestamps) are rejected.
+
 ### Changed
+
+- Migrations are numbered `001`, `002`, ... and their files are named
+  `<number>_<slug>.py`.
 
 ### Deprecated
 

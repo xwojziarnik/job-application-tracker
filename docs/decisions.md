@@ -29,6 +29,7 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-15 | Seniority as one combined value           | Accepted | Single field: `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` |
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
 | D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
+| D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
 
 ---
 
@@ -723,6 +724,39 @@ of internal details.
 
 ---
 
+## D-18: Migration numbering
+
+**Status:** Accepted (2026-10-30)
+
+**Context.** Alembic gives every migration a random revision ID (e.g. `f712bc9b7594`), and
+the file names started with the creation date. The order of migrations is visible only by
+following `down_revision` from file to file.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Random IDs (Alembic default) | Branches can add migrations in parallel; Alembic merges heads | Order not visible in the file list or in `alembic_version` |
+| Sequential numbers `001`, `002`, ... | Order visible at a glance; short, readable IDs | Two branches adding a migration get the same number |
+
+**Decision.** Revision IDs are **sequential three-digit numbers** (`001`, `002`, ...) and
+files are named `<number>_<slug>.py`, e.g. `001_create_companies.py`. The number is set
+automatically by `process_revision_directives` in `migrations/env.py`;
+`revision_environment = true` in `alembic.ini` makes it apply to hand-written migrations
+as well.
+
+**Rationale.** A single developer works in small pull requests, so parallel migrations are
+rare, and a readable order is worth more than conflict-free IDs.
+
+**Consequences.**
+- Before merging a branch with a migration, the number must still be the next one; if
+  `main` got a migration meanwhile, renumber the branch's migration (`revision`,
+  `down_revision` and the file name). A unit test fails when there are several heads or
+  the numbers are not consecutive.
+- `alembic revision` runs `env.py` and connects to the database even without
+  `--autogenerate`, so the database must be running.
+- Three digits allow 999 migrations; beyond that the format must be widened.
+
+---
+
 ## Deferred to each model
 
 Decided while designing each model in its own slice (stage 2, steps 1–3), and recorded here
@@ -732,3 +766,24 @@ when made:
   schemas).
 - **PATCH semantics**: an omitted field means "do not change"; whether `null` clears a field
   and which fields may be cleared is decided per field.
+
+### Company (2026-10-30)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `name` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming; unique case-insensitively (D-05) |
+| `website` | https URL, up to 2048 characters | no | Must be an `https` URL (plain `http` is rejected); kept as entered; not unique |
+| `location` | text, up to 200 characters | no | Headquarters (city, country); where the job is done belongs to the offer |
+| `industry` | text, up to 100 characters | no | Free text, e.g. `fintech` |
+| `notes` | text, up to 2000 characters | no | Free notes |
+| `is_active` | boolean | set by the app | `true` on creation; changed only through `PATCH` (D-04) |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Blank text in optional fields** (empty or only whitespace) is stored as `null`, so
+  "no value" has one representation. All text fields are trimmed.
+- **Create** (`POST`) accepts `name`, `website`, `location`, `industry` and `notes`; a new
+  company is always active.
+- **Update** (`PATCH`): an omitted field is not changed. `null` (or blank text) clears an
+  optional field; `null` for `name` or `is_active` is rejected with `422`.
+- **Read** returns every field above.

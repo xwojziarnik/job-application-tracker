@@ -1,8 +1,8 @@
 """Declarative base and mixins shared by all models.
 
 Models list the mixins before ``Base``, e.g.
-``class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base)``; the order of the mixins is
-also the order of their columns in the table.
+``class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base)``. In the table, the model's own
+columns come first and the mixins' columns after them.
 """
 
 from datetime import datetime
