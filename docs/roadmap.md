@@ -60,8 +60,7 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   name of the violated constraint from an `IntegrityError`; its docstring shows the service
   pattern (flush, roll back, map the constraint to a domain error, commit). Repositories
   and services themselves are written in step 1.
-- [x] CHANGELOG entries (none for the second pull request: the building blocks are not
-  visible in the API yet), review.
+- [x] CHANGELOG entries, review.
 - [ ] Merge the second pull request (no release marker; the next release comes with step 1).
 
 ### Step 1: Company (pattern-setting slice)
