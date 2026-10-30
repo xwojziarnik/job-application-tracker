@@ -773,7 +773,7 @@ when made:
 |---|---|---|---|
 | `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
 | `name` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming; unique case-insensitively (D-05) |
-| `website` | http(s) URL, up to 2048 characters | no | Validated as an `http`/`https` URL; not unique |
+| `website` | https URL, up to 2048 characters | no | Must be an `https` URL (plain `http` is rejected); kept as entered; not unique |
 | `location` | text, up to 200 characters | no | Headquarters (city, country); where the job is done belongs to the offer |
 | `industry` | text, up to 100 characters | no | Free text, e.g. `fintech` |
 | `notes` | text, up to 2000 characters | no | Free notes |
