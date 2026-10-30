@@ -29,6 +29,7 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-15 | Seniority as one combined value           | Accepted | Single field: `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` |
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
 | D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
+| D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
 
 ---
 
@@ -720,6 +721,39 @@ of internal details.
 - Starlette re-raises an unexpected exception after the 500 response is sent, so the server
   logs it a second time; with `debug=True` it shows its own traceback page instead of the
   handler's response.
+
+---
+
+## D-18: Migration numbering
+
+**Status:** Accepted (2026-10-30)
+
+**Context.** Alembic gives every migration a random revision ID (e.g. `f712bc9b7594`), and
+the file names started with the creation date. The order of migrations is visible only by
+following `down_revision` from file to file.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Random IDs (Alembic default) | Branches can add migrations in parallel; Alembic merges heads | Order not visible in the file list or in `alembic_version` |
+| Sequential numbers `001`, `002`, ... | Order visible at a glance; short, readable IDs | Two branches adding a migration get the same number |
+
+**Decision.** Revision IDs are **sequential three-digit numbers** (`001`, `002`, ...) and
+files are named `<number>_<slug>.py`, e.g. `001_create_companies.py`. The number is set
+automatically by `process_revision_directives` in `migrations/env.py`;
+`revision_environment = true` in `alembic.ini` makes it apply to hand-written migrations
+as well.
+
+**Rationale.** A single developer works in small pull requests, so parallel migrations are
+rare, and a readable order is worth more than conflict-free IDs.
+
+**Consequences.**
+- Before merging a branch with a migration, the number must still be the next one; if
+  `main` got a migration meanwhile, renumber the branch's migration (`revision`,
+  `down_revision` and the file name). A unit test fails when there are several heads or
+  the numbers are not consecutive.
+- `alembic revision` runs `env.py` and connects to the database even without
+  `--autogenerate`, so the database must be running.
+- Three digits allow 999 migrations; beyond that the format must be widened.
 
 ---
 
