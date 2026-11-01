@@ -20,6 +20,9 @@ the new version section, updates the links below and tags the commit.
 - `companies` table: name (unique regardless of case), website, location, industry, notes
   and an `is_active` flag; companies are deactivated instead of deleted.
 - Test that fails when the models and the migrations differ.
+- Company use cases: create, read, list, update and an idempotent "get or create" by
+  name; a duplicate name returns `409 company_already_exists`, and "get or create" for an
+  inactive company returns `409 company_inactive`.
 - `Makefile` with development tasks: `make check` before a commit, `make ci` for the CI
   checks, plus formatting, tests, migrations and running the API.
 - Company schemas for creating, updating and reading a company: text is trimmed, blank

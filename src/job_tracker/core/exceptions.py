@@ -61,6 +61,13 @@ class ConflictError(DomainError):
     default_message: str = "Request conflicts with the current state of the resource"
 
 
+class CompanyAlreadyExistsError(ConflictError):
+    """A company with the same name, regardless of case, already exists (D-05)."""
+
+    code: str = "company_already_exists"
+    default_message: str = "A company with this name already exists"
+
+
 class ServiceUnavailableError(DomainError):
     """A dependency the request needs is not available (503)."""
 

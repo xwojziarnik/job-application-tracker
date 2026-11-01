@@ -73,10 +73,10 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   convention does not name indexes on expressions): the service maps that name to `409`.
 - [x] Migration (review the expression index by hand).
 - [x] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
-- [ ] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
+- [x] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
   `created_at` then `id`) and service (commits, maps the unique index violation to
   `ConflictError` with `violated_constraint()`, D-07); inactive companies hidden by default.
-- [ ] Idempotent "get or create company by name" with a savepoint (`begin_nested()`), so a
+- [x] Idempotent "get or create company by name" with a savepoint (`begin_nested()`), so a
   concurrent insert of the same name is not an error; inactive company →
   `409 company_inactive` (D-10).
 - [ ] Endpoints: list (search, pagination, include inactive), create, get, update.
