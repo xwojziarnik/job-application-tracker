@@ -11,7 +11,7 @@ concepts and reviews (security, clean code, `pip-audit`), and writes code only w
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Project skeleton, Docker, migrations, CI, security scanning, automated releases | Done (v0.1.0) |
-| 2 | Companies, job offers with tags, applications | **In progress** |
+| 2 | Companies, job offers with tags, applications, CV versions | **In progress** |
 | 3 | Status workflow with history, timeline, filtering and search | Planned |
 | 4 | JWT authentication | Planned |
 | 5 | Statistics (funnel, job board effectiveness, response times) | Planned |
@@ -20,7 +20,8 @@ concepts and reviews (security, clean code, `pip-audit`), and writes code only w
 ## Stage 2: companies, job offers, applications
 
 **Goal:** through the API, add a company, a job offer (with tags) and an application to that
-offer, then list, filter, edit and delete them according to the decisions.
+offer, optionally with the CV version sent with it, then list, filter, edit and delete them
+according to the decisions.
 
 **Approach:** vertical slices. Each entity goes from model to endpoint and tests in one
 small PR; the first slice (Company) sets the patterns for the rest.
@@ -106,7 +107,18 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [ ] Endpoints with filters, allow-listed sorting, nested offer and company without N+1.
 - [ ] Tests.
 
-### Step 4: Close the stage
+### Step 4: CV documents (D-19)
+
+- [ ] SeaweedFS in Docker Compose (S3 API, private bucket, own volume) and in testcontainers.
+- [ ] Settings: S3 endpoint, bucket, credentials; client through `aioboto3`.
+- [ ] Model `cv_documents` and optional `applications.cv_document_id` (`RESTRICT`).
+- [ ] Upload: PDF recognised by content, at most 5 MB, generated object key, reuse of a
+  document with the same `sha256`; delete the object if the commit fails.
+- [ ] Download through a short-lived presigned URL; clean-up of objects without a row.
+- [ ] Tests (unit and integration against SeaweedFS).
+- [ ] Not exposed outside `127.0.0.1` until JWT authentication (stage 4).
+
+### Step 5: Close the stage
 
 - [ ] CHANGELOG, README (endpoint table, roadmap), review, `pip-audit`.
 - [ ] Merge with `[minor]` → v0.2.0 (or release after each slice).

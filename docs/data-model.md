@@ -8,6 +8,7 @@ Tables and the relationships between them. Decisions referenced as `D-XX` are in
 | `companies` | Implemented (stage 2, step 1) |
 | `job_offers`, `tags`, `job_offer_tags` | Planned (stage 2, step 2) |
 | `applications` | Planned (stage 2, step 3) |
+| `cv_documents` (files in SeaweedFS) | Planned (stage 2, step 4, D-19) |
 
 Columns of the planned tables are a sketch based on the decisions so far; their exact
 names, types and required fields are decided in their own step and this file is updated
@@ -19,6 +20,7 @@ erDiagram
     job_offers ||--o{ job_offer_tags : "is tagged with"
     tags ||--o{ job_offer_tags : "labels"
     job_offers ||--o{ applications : "receives (ON DELETE CASCADE)"
+    cv_documents |o--o{ applications : "sent with (ON DELETE RESTRICT)"
 
     companies {
         uuid id PK
@@ -58,8 +60,18 @@ erDiagram
     applications {
         uuid id PK
         uuid job_offer_id FK "one active per offer"
+        uuid cv_document_id FK "nullable"
         varchar status "D-16"
         date sent_on "nullable"
+    }
+
+    cv_documents {
+        uuid id PK
+        varchar object_key UK "cv/{uuid}.pdf in SeaweedFS"
+        varchar file_name "as uploaded, metadata only"
+        varchar content_type "application/pdf"
+        int size_bytes "at most 5 MB"
+        char(64) sha256 UK "same file reuses the document"
     }
 ```
 
@@ -73,6 +85,7 @@ only for `companies` to keep the diagram readable.
 | `companies` | `job_offers` | one company, many offers | `RESTRICT`: companies are never deleted, only deactivated; offers of an inactive company are hidden from lists | D-04, D-10 |
 | `job_offers` | `tags` | many to many, through `job_offer_tags` | the offer's links to tags are deleted; tags stay | D-09 |
 | `job_offers` | `applications` | one offer, many applications over time, at most one active | `CASCADE`: deleting an offer deletes its applications | D-04, D-06, D-16 |
+| `cv_documents` | `applications` | one CV version, used by any number of applications; an application has at most one CV (optional) | `RESTRICT`: a CV used by an application cannot be deleted; deleting an application keeps its CV | D-19 |
 
 ## Uniqueness
 
@@ -82,3 +95,10 @@ only for `companies` to keep the diagram readable.
 | `job_offers` | normalised URL | unique constraint | D-05 |
 | `tags` | normalised name | unique constraint | D-09 |
 | `applications` | one active application per offer | partial unique index on `job_offer_id` for non-final statuses | D-06, D-16 |
+| `cv_documents` | file content (`sha256`) and object key | unique constraints | D-19 |
+
+## Files outside the database
+
+CV files are stored in **SeaweedFS** through the S3 API, in a private bucket; the database
+keeps only their metadata in `cv_documents`. The two stores have no shared transaction, so
+the order of writes and the clean-up of orphaned objects are described in D-19.

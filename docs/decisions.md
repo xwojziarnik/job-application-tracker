@@ -30,6 +30,7 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
 | D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
 | D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
+| D-19 | Storing CV versions                       | Accepted | Optional CV per application, PDF in self-hosted SeaweedFS through the S3 API |
 
 ---
 
@@ -754,6 +755,56 @@ rare, and a readable order is worth more than conflict-free IDs.
 - `alembic revision` runs `env.py` and connects to the database even without
   `--autogenerate`, so the database must be running.
 - Three digits allow 999 migrations; beyond that the format must be widened.
+
+---
+
+## D-19: Storing CV versions
+
+**Status:** Accepted (2026-11-01)
+
+**Context.** The owner tailors the CV to each offer. Knowing later which version was sent
+with which application helps before an interview. The CV is optional: not every
+application has one.
+
+| Option | Pros | Cons |
+|---|---|---|
+| Amazon S3 | The reference object store; nothing to run | Paid (pay-as-you-go after limited free credits); needs an AWS account |
+| MinIO | S3-compatible; well known | Community edition in maintenance mode: no new Docker images or binaries since October 2025 |
+| SeaweedFS (self-hosted, S3 API) | Free, Apache 2.0, one container, actively developed | One more service to run and back up |
+| Garage (self-hosted, S3 API) | Free, lightweight | One-time cluster layout setup; AGPLv3 |
+| PostgreSQL `bytea` | Nothing new to run; one backup; transactional | Does not practise object storage; the database grows with every file |
+
+**Decision.**
+- **Storage:** files live in **SeaweedFS**, run locally in Docker Compose (and in
+  testcontainers for integration tests). The code talks to it **only through the S3 API**
+  (`aioboto3`), with the endpoint, bucket and credentials in settings, so another
+  S3-compatible store (e.g. Garage, Cloudflare R2) can replace it by configuration alone.
+- **Model:** a separate `cv_documents` table holds the metadata (`object_key`,
+  `file_name`, `content_type`, `size_bytes`, `sha256`); `applications.cv_document_id` is an
+  optional foreign key, so one CV version can be reused by several applications. A file
+  with the same `sha256` as an existing document reuses that document instead of storing
+  a copy.
+- **Object keys** are generated (`cv/<uuid>.pdf`); the file name from the client is kept
+  only as metadata and never used in the key.
+- **Validation:** PDF only, recognised by its content (it starts with `%PDF-`), not by the
+  extension or the `Content-Type` sent by the client; at most 5 MB, rejected before the
+  whole file is read into memory.
+- **Access:** the bucket is private; downloads use short-lived presigned URLs.
+- **Deleting:** a CV document used by an application cannot be deleted
+  (`ON DELETE RESTRICT`); deleting an application keeps the document for reuse.
+
+**Rationale.** Free and self-hosted, while the S3 API keeps the code portable and is a
+skill worth practising in this project. A separate table matches the real use: the same CV
+version is often sent to several companies.
+
+**Consequences.**
+- The database and the object store have no shared transaction: upload the file first,
+  then commit; if the commit fails, delete the uploaded file. Objects without a row
+  (e.g. after a crash between the two steps) are removed by a periodic clean-up.
+- A CV holds personal data and the API has no authentication until stage 4: the feature
+  must not be exposed outside `127.0.0.1` before JWT authentication is in place.
+- SeaweedFS data needs its own volume and its own backup, next to PostgreSQL's.
+- New dependencies: `aioboto3` (S3 client) and `python-multipart` (file uploads).
 
 ---
 
