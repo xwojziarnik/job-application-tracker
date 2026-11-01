@@ -60,13 +60,14 @@ docker compose -f docker-compose.yml up --build
 Requires Python 3.13+ (3.14 recommended) and Docker.
 
 ```bash
-pip install -e . --group dev   # app + dev tools (pip 25.1+ for --group)
-pre-commit install             # ruff checks on every commit
+make install                   # app + dev tools (pip 25.1+ for --group) and the pre-commit hook
 cp .env.example .env
-docker compose up -d db        # PostgreSQL only
-alembic upgrade head
-uvicorn job_tracker.main:app --reload
+make db                        # PostgreSQL only
+make migrate                   # apply migrations
+make run                       # API with live reload
 ```
+
+`make` (or `make help`) lists every task in the [`Makefile`](Makefile).
 
 ## Configuration
 
@@ -134,11 +135,12 @@ tests/              # unit/ and integration/
 ## Testing and quality checks
 
 ```bash
-ruff check . && ruff format --check .   # lint (incl. security rules) and formatting
-mypy                                    # strict type checking
-pytest                                  # unit and integration tests
-pip-audit --skip-editable               # known vulnerabilities in installed packages
+make check   # before a commit: format and auto-fix, strict type check, all tests
+make ci      # what CI runs, without changing files: lint, type check, tests, pip-audit
 ```
+
+Single steps: `make format`, `make lint`, `make typecheck`, `make test`, `make test-unit`,
+`make test-integration`, `make audit`.
 
 Integration tests start a throwaway PostgreSQL with
 [testcontainers](https://testcontainers.com/). Locally they are skipped when Docker is not
@@ -172,9 +174,9 @@ requests and weekly:
 ## Migrations
 
 ```bash
-alembic revision --autogenerate -m "describe change"   # after changing models
-alembic upgrade head                                   # apply
-alembic downgrade -1                                   # roll back one revision
+make migration m="describe change"   # after changing models; numbered 001, 002, ... (D-18)
+make migrate                         # apply
+make downgrade                       # roll back one revision
 ```
 
 New models must be imported in [`models/__init__.py`](src/job_tracker/models/__init__.py)
