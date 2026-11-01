@@ -6,6 +6,7 @@ columns come first and the mixins' columns after them.
 """
 
 from datetime import datetime
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, MetaData, func
@@ -26,12 +27,18 @@ class Base(DeclarativeBase):
 
 
 class TimestampMixin:
-    """``created_at`` and ``updated_at`` columns, set by the database (UTC, D-11)."""
+    """``created_at`` and ``updated_at`` columns, set by the database (UTC, D-11).
+
+    ``eager_defaults`` makes SQLAlchemy load the values the database sets with
+    ``RETURNING``, also after an ``UPDATE``; otherwise ``updated_at`` would be expired and
+    reading it would trigger a lazy load, which fails in async code (``MissingGreenlet``).
+    """
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    __mapper_args__: ClassVar[dict[str, Any]] = {"eager_defaults": True}
 
 
 class UUIDPrimaryKeyMixin:

@@ -787,3 +787,7 @@ when made:
 - **Update** (`PATCH`): an omitted field is not changed. `null` (or blank text) clears an
   optional field; `null` for `name` or `is_active` is rejected with `422`.
 - **Read** returns every field above.
+- **List** is sorted by name regardless of case (`lower(name)`, unique, so the order is
+  deterministic for pagination, D-08) and hides inactive companies unless
+  `include_inactive` is set (D-04). `search` matches a fragment of the name regardless of
+  case; `%` and `_` in the search text are plain characters.
