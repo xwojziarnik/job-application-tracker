@@ -842,3 +842,42 @@ when made:
   deterministic for pagination, D-08) and hides inactive companies unless
   `include_inactive` is set (D-04). `search` matches a fragment of the name regardless of
   case; `%` and `_` in the search text are plain characters.
+
+### Job offer (2026-11-02)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `company_id` | UUID | yes | Foreign key with `ON DELETE RESTRICT` (D-04); the company must be active (D-10); cannot be changed after creation |
+| `title` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming |
+| `url` | https URL, up to 2048 characters | yes | Normalised before saving (lower-case scheme and host, tracking parameters such as `utm_*` removed, no trailing slash) and unique (D-05) |
+| `source` | enumeration | yes | `linkedin`, `justjoinit`, `nofluffjobs`, `pracuj`, `bulldogjob`, `company_website` (D-14) |
+| `seniority` | enumeration | yes | `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` (D-15) |
+| `work_mode` | enumeration | yes | `remote`, `hybrid`, `office` (D-14) |
+| `location` | text, up to 200 characters | no | Where the job is done; the company's headquarters is `Company.location` |
+| `salary_min`, `salary_max` | integer | no | B2B net per month in whole currency units (D-03); both or neither; both positive; `salary_min <= salary_max` |
+| `currency` | enumeration | with the salary | `PLN`, `EUR`, `USD` (D-14); required when the salary is given, empty otherwise |
+| `posted_on` | date | no | `DATE` (D-11); not in the future |
+| `description` | text, up to 20 000 characters | no | The text of the job advert, kept in case the advert disappears from the job board |
+| `notes` | text, up to 2000 characters | no | The owner's own notes |
+| `tags` | list of tag names | no | Free tags, normalised (D-09); at most 20 per offer; duplicates after normalisation are merged |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Salary is all or nothing:** `salary_min`, `salary_max` and `currency` are either all
+  set or all empty, so an amount never exists without its currency and every stored range
+  is complete and comparable. An hourly rate is converted when the offer is entered
+  (160 hours per month, D-03). Enforced by the schema and by a `CHECK` constraint.
+- **Blank text in optional fields** is stored as `null`, as for companies. All text
+  fields are trimmed.
+- **Create** (`POST`) accepts every field above except `id` and the timestamps. A company
+  that does not exist returns `404`; an inactive one returns `409 company_inactive`
+  (D-10); a URL that is already stored (after normalisation) returns `409`.
+- **Update** (`PATCH`): an omitted field is not changed. `null` clears an optional field;
+  `null` for `title`, `url`, `source`, `seniority` or `work_mode` is rejected with `422`.
+  `company_id` is not accepted (`422`): an offer added to the wrong company is deleted and
+  added again. The salary rule applies to the offer after the update, so a `PATCH` that
+  sends only `salary_max` must keep a complete, valid range. `tags` replaces the whole
+  list; `[]` removes all tags.
+- **Delete** removes the offer and its applications (`ON DELETE CASCADE`, D-04).
+- **Read and list**: offers of an inactive company are hidden from lists by default
+  (D-04). The response shape, filters and sort order are decided with the endpoints.

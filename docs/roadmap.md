@@ -90,11 +90,12 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [x] Tests: happy paths, 404, 409, 422, 405 for delete, pagination limit, OpenAPI paths
   (`tests/integration/test_company_api.py`, written first, TDD).
 - [x] CHANGELOG, README (endpoint table, error examples), review.
-- [ ] Merge the pull request with `[minor]` (v0.4.0).
+- [x] Merge the pull request with `[minor]` (released as v0.4.0).
 
 ### Step 2: JobOffer + Tag
 
-- [ ] Decide required/optional fields and PATCH semantics.
+- [x] Decide required/optional fields and PATCH semantics (see "Deferred to each
+  model" → "Job offer" in `decisions.md`).
 - [ ] Model: company FK `RESTRICT` (D-04), source (D-14), seniority (D-15), work mode,
   salary `int` B2B net per month + currency, optional (D-03), `CHECK salary_min <= salary_max`.
 - [ ] Normalised, unique offer URL (D-05).
