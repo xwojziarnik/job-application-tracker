@@ -5,13 +5,17 @@ Working plan with progress. Decisions referenced as `D-XX` are in
 
 **Way of working (from stage 2):** the project owner writes the code; Claude plans, explains
 concepts and reviews (security, clean code, `pip-audit`), and writes code only when asked.
+Documentation is Claude's job: during every review Claude writes missing docstrings and
+fixes inaccurate ones (including the response descriptions shown in Swagger), keeps the
+`[Unreleased]` section of `CHANGELOG.md`, `README.md` and the files in `docs/` (roadmap
+progress, decisions) up to date with the reviewed changes, and lists all of it in the review.
 
 ## Status
 
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Project skeleton, Docker, migrations, CI, security scanning, automated releases | Done (v0.1.0) |
-| 2 | Companies, job offers with tags, applications | **In progress** |
+| 2 | Companies, job offers with tags, applications, CV versions | **In progress** |
 | 3 | Status workflow with history, timeline, filtering and search | Planned |
 | 4 | JWT authentication | Planned |
 | 5 | Statistics (funnel, job board effectiveness, response times) | Planned |
@@ -20,7 +24,8 @@ concepts and reviews (security, clean code, `pip-audit`), and writes code only w
 ## Stage 2: companies, job offers, applications
 
 **Goal:** through the API, add a company, a job offer (with tags) and an application to that
-offer, then list, filter, edit and delete them according to the decisions.
+offer, optionally with the CV version sent with it, then list, filter, edit and delete them
+according to the decisions.
 
 **Approach:** vertical slices. Each entity goes from model to endpoint and tests in one
 small PR; the first slice (Company) sets the patterns for the rest.
@@ -36,7 +41,8 @@ the error format (2026-10-29).
 
 **0.2 Shared building blocks and test infrastructure**: done (2026-10-30), in two pull
 requests: the test database and the error format on `feat/stage2-foundations` (v0.2.0);
-pagination, the primary key mixin and transaction handling on `feat/stage2-building-blocks`.
+pagination, the primary key mixin and transaction handling on `feat/stage2-building-blocks`
+(v0.3.0).
 
 Suggested order (test infrastructure first, so the rest can be tested on a real database):
 
@@ -61,26 +67,30 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   pattern (flush, roll back, map the constraint to a domain error, commit). Repositories
   and services themselves are written in step 1.
 - [x] CHANGELOG entries, review.
-- [ ] Merge the second pull request (no release marker; the next release comes with step 1).
+- [x] Merge the second pull request (merged with `[minor]`, released as v0.3.0).
 
 ### Step 1: Company (pattern-setting slice)
 
-- [ ] Decide required/optional fields and PATCH `null` semantics (see "Deferred to each
-  model" in `decisions.md`).
-- [ ] Model with `UUIDPrimaryKeyMixin`, `TimestampMixin` and `is_active` (D-04); unique
+- [x] Decide required/optional fields and PATCH `null` semantics (see "Deferred to each
+  model" → "Company" in `decisions.md`).
+- [x] Model with `UUIDPrimaryKeyMixin`, `TimestampMixin` and `is_active` (D-04); unique
   index on `lower(name)` (D-05). Name the expression index explicitly (the naming
   convention does not name indexes on expressions): the service maps that name to `409`.
-- [ ] Migration (review the expression index by hand).
-- [ ] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
-- [ ] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
-  `created_at` then `id`) and service (commits, maps the unique index violation to
+- [x] Migration (review the expression index by hand).
+- [x] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
+- [x] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
+  `lower(name)`, which is unique and therefore deterministic) and service (commits, maps the unique index violation to
   `ConflictError` with `violated_constraint()`, D-07); inactive companies hidden by default.
-- [ ] Idempotent "get or create company by name" with a savepoint (`begin_nested()`), so a
+- [x] Idempotent "get or create company by name" with a savepoint (`begin_nested()`), so a
   concurrent insert of the same name is not an error; inactive company →
   `409 company_inactive` (D-10).
-- [ ] Endpoints: list (search, pagination, include inactive), create, get, update.
-  No delete (D-04).
-- [ ] Tests: happy paths, 404, 409, 422, pagination limit.
+- [x] Endpoints: list (search, pagination, include inactive), create, get, update, and
+  `POST /companies/get-or-create` (`201` when created, `200` when it existed). No delete
+  (D-04). All errors, including `422`, documented in OpenAPI in the shared format.
+- [x] Tests: happy paths, 404, 409, 422, 405 for delete, pagination limit, OpenAPI paths
+  (`tests/integration/test_company_api.py`, written first, TDD).
+- [x] CHANGELOG, README (endpoint table, error examples), review.
+- [ ] Merge the pull request with `[minor]` (v0.4.0).
 
 ### Step 2: JobOffer + Tag
 
@@ -106,7 +116,18 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [ ] Endpoints with filters, allow-listed sorting, nested offer and company without N+1.
 - [ ] Tests.
 
-### Step 4: Close the stage
+### Step 4: CV documents (D-19)
+
+- [ ] SeaweedFS in Docker Compose (S3 API, private bucket, own volume) and in testcontainers.
+- [ ] Settings: S3 endpoint, bucket, credentials; client through `aioboto3`.
+- [ ] Model `cv_documents` and optional `applications.cv_document_id` (`RESTRICT`).
+- [ ] Upload: PDF recognised by content, at most 5 MB, generated object key, reuse of a
+  document with the same `sha256`; delete the object if the commit fails.
+- [ ] Download through a short-lived presigned URL; clean-up of objects without a row.
+- [ ] Tests (unit and integration against SeaweedFS).
+- [ ] Not exposed outside `127.0.0.1` until JWT authentication (stage 4).
+
+### Step 5: Close the stage
 
 - [ ] CHANGELOG, README (endpoint table, roadmap), review, `pip-audit`.
 - [ ] Merge with `[minor]` → v0.2.0 (or release after each slice).

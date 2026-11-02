@@ -17,7 +17,36 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- `companies` table: name (unique regardless of case), website, location, industry, notes
+  and an `is_active` flag; companies are deactivated instead of deleted.
+- Test that fails when the models and the migrations differ.
+- Company use cases: create, read, list, update and an idempotent "get or create" by
+  name; a duplicate name returns `409 company_already_exists`, and "get or create" for an
+  inactive company returns `409 company_inactive`.
+- `Makefile` with development tasks: `make check` before a commit, `make ci` for the CI
+  checks, plus formatting, tests, migrations and running the API.
+- Company schemas for creating, updating and reading a company: text is trimmed, blank
+  optional text is stored as `null`, `website` must be an `https` URL, and unknown fields
+  (including `id`, `is_active` on creation and the timestamps) are rejected.
+- Company endpoints under `/api/v1/companies`:
+  - `POST /companies` creates a company (`201`; `409 company_already_exists` for a name
+    taken regardless of case);
+  - `GET /companies` returns a page of companies sorted by name, with `search` (a
+    fragment of the name, regardless of case) and `include_inactive` (inactive companies
+    are hidden by default);
+  - `GET /companies/{company_id}` returns a company, active or not (`404` if unknown);
+  - `PATCH /companies/{company_id}` changes only the fields sent; `null` clears an
+    optional field, and `is_active` deactivates or reactivates the company;
+  - `POST /companies/get-or-create` returns the company with this name (`200`) or creates
+    it (`201`); an inactive company is refused with `409 company_inactive`.
+
+  Companies cannot be deleted (`405`). All errors, including `422`, are documented in the
+  OpenAPI docs in the shared error format.
+
 ### Changed
+
+- Migrations are numbered `001`, `002`, ... and their files are named
+  `<number>_<slug>.py`.
 
 ### Deprecated
 
