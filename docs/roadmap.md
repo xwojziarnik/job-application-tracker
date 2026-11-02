@@ -5,9 +5,10 @@ Working plan with progress. Decisions referenced as `D-XX` are in
 
 **Way of working (from stage 2):** the project owner writes the code; Claude plans, explains
 concepts and reviews (security, clean code, `pip-audit`), and writes code only when asked.
-Documenting the code is Claude's job: during every review Claude writes missing docstrings
-and fixes inaccurate ones (including the response descriptions shown in Swagger), and lists
-them in the review.
+Documentation is Claude's job: during every review Claude writes missing docstrings and
+fixes inaccurate ones (including the response descriptions shown in Swagger), keeps the
+`[Unreleased]` section of `CHANGELOG.md`, `README.md` and the files in `docs/` (roadmap
+progress, decisions) up to date with the reviewed changes, and lists all of it in the review.
 
 ## Status
 
@@ -78,14 +79,18 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [x] Migration (review the expression index by hand).
 - [x] Schemas: create, update (PATCH with `exclude_unset`), read; no `id`/timestamps in input.
 - [x] Repository (`add` + `flush`, paginated list: `LIMIT`/`OFFSET`, `COUNT`, sort by
-  `created_at` then `id`) and service (commits, maps the unique index violation to
+  `lower(name)`, which is unique and therefore deterministic) and service (commits, maps the unique index violation to
   `ConflictError` with `violated_constraint()`, D-07); inactive companies hidden by default.
 - [x] Idempotent "get or create company by name" with a savepoint (`begin_nested()`), so a
   concurrent insert of the same name is not an error; inactive company →
   `409 company_inactive` (D-10).
-- [ ] Endpoints: list (search, pagination, include inactive), create, get, update.
-  No delete (D-04).
-- [ ] Tests: happy paths, 404, 409, 422, pagination limit.
+- [x] Endpoints: list (search, pagination, include inactive), create, get, update, and
+  `POST /companies/get-or-create` (`201` when created, `200` when it existed). No delete
+  (D-04). All errors, including `422`, documented in OpenAPI in the shared format.
+- [x] Tests: happy paths, 404, 409, 422, 405 for delete, pagination limit, OpenAPI paths
+  (`tests/integration/test_company_api.py`, written first, TDD).
+- [x] CHANGELOG, README (endpoint table, error examples), review.
+- [ ] Merge the pull request with `[minor]` (v0.4.0).
 
 ### Step 2: JobOffer + Tag
 
