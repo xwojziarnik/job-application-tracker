@@ -5,6 +5,9 @@ Working plan with progress. Decisions referenced as `D-XX` are in
 
 **Way of working (from stage 2):** the project owner writes the code; Claude plans, explains
 concepts and reviews (security, clean code, `pip-audit`), and writes code only when asked.
+Documenting the code is Claude's job: during every review Claude writes missing docstrings
+and fixes inaccurate ones (including the response descriptions shown in Swagger), and lists
+them in the review.
 
 ## Status
 
