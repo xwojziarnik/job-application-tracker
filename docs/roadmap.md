@@ -37,7 +37,8 @@ the error format (2026-10-29).
 
 **0.2 Shared building blocks and test infrastructure**: done (2026-10-30), in two pull
 requests: the test database and the error format on `feat/stage2-foundations` (v0.2.0);
-pagination, the primary key mixin and transaction handling on `feat/stage2-building-blocks`.
+pagination, the primary key mixin and transaction handling on `feat/stage2-building-blocks`
+(v0.3.0).
 
 Suggested order (test infrastructure first, so the rest can be tested on a real database):
 
@@ -62,7 +63,7 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   pattern (flush, roll back, map the constraint to a domain error, commit). Repositories
   and services themselves are written in step 1.
 - [x] CHANGELOG entries, review.
-- [ ] Merge the second pull request (no release marker; the next release comes with step 1).
+- [x] Merge the second pull request (merged with `[minor]`, released as v0.3.0).
 
 ### Step 1: Company (pattern-setting slice)
 
