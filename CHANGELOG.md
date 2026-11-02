@@ -17,6 +17,20 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.4.0] - 2026-11-02
+
+### Added
+
 - `companies` table: name (unique regardless of case), website, location, industry, notes
   and an `is_active` flag; companies are deactivated instead of deleted.
 - Test that fails when the models and the migrations differ.
@@ -39,7 +53,6 @@ the new version section, updates the links below and tags the commit.
     optional field, and `is_active` deactivates or reactivates the company;
   - `POST /companies/get-or-create` returns the company with this name (`200`) or creates
     it (`201`); an inactive company is refused with `409 company_inactive`.
-
   Companies cannot be deleted (`405`). All errors, including `422`, are documented in the
   OpenAPI docs in the shared error format.
 
@@ -47,14 +60,6 @@ the new version section, updates the links below and tags the commit.
 
 - Migrations are numbered `001`, `002`, ... and their files are named
   `<number>_<slug>.py`.
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## [0.3.0] - 2026-10-30
 
@@ -131,7 +136,8 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.0...v0.1.1
