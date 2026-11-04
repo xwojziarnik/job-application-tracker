@@ -25,12 +25,13 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-11 | Dates, times and time zones               | Accepted | UTC `TIMESTAMPTZ` for events, `DATE` for calendar days |
 | D-12 | Test database isolation                   | Accepted | Separate database per test, cloned from a migrated template |
 | D-13 | Error response format                     | Accepted (details refined by D-17) | One format for all errors, incl. validation and `HTTPException` |
-| D-14 | Allowed values of enumerations            | Accepted (seniority superseded by D-15) | Sources, seniority range, work mode, currencies (see entry) |
+| D-14 | Allowed values of enumerations            | Accepted (seniority superseded by D-15, offer sources by D-20) | Sources, seniority range, work mode, currencies (see entry) |
 | D-15 | Seniority as one combined value           | Accepted | Single field: `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` |
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
 | D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
 | D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
 | D-19 | Storing CV versions                       | Accepted | Optional CV per application, PDF in self-hosted SeaweedFS through the S3 API |
+| D-20 | Offer sources                             | Accepted | Adds `rocketjobs` and `joobie` to the D-14 sources |
 
 ---
 
@@ -556,7 +557,8 @@ format also decides what is exposed: no stack traces, SQL or internal exception 
 
 ## D-14: Allowed values of enumerations
 
-**Status:** Accepted (2026-10-26); the seniority part is superseded by D-15
+**Status:** Accepted (2026-10-26); the seniority part is superseded by D-15, the offer
+sources by D-20
 
 **Context.** D-02 decided how enumerations are stored; this entry fixes their values.
 Values are stored as lower-case strings (D-02), so they are listed in that form.
@@ -808,6 +810,39 @@ version is often sent to several companies.
 
 ---
 
+## D-20: Offer sources
+
+**Status:** Accepted (2026-11-04). Supersedes the offer sources of D-14.
+
+**Context.** D-14 closed the list of offer sources to five job boards plus
+`company_website`. While implementing the job offer model, two more job boards used to
+look for offers were added: Rocket Jobs and Joobie.
+
+**Decision.** The offer source is one of:
+
+| Value | Job board |
+|---|---|
+| `linkedin` | LinkedIn |
+| `pracuj` | Pracuj.pl |
+| `justjoinit` | Just Join IT |
+| `bulldogjob` | Bulldogjob |
+| `nofluffjobs` | No Fluff Jobs |
+| `rocketjobs` | Rocket Jobs |
+| `joobie` | Joobie |
+| `company_website` | A company's careers page |
+
+Values are lower-case and contain no dots, so they are the same in SQL, the API and the
+code (D-02).
+
+**Rationale.** The list covers every job board actually used; a closed list keeps the
+"effectiveness of job boards" statistics (stage 5) clean.
+
+**Consequences.**
+- The `CHECK` constraint of `job_offers.source` lists these eight values. Adding another
+  job board later is a new migration and a new decision entry.
+
+---
+
 ## Deferred to each model
 
 Decided while designing each model in its own slice (stage 2, steps 1–3), and recorded here
@@ -851,7 +886,7 @@ when made:
 | `company_id` | UUID | yes | Foreign key with `ON DELETE RESTRICT` (D-04); the company must be active (D-10); cannot be changed after creation |
 | `title` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming |
 | `url` | https URL, up to 2048 characters | yes | Normalised before saving (lower-case scheme and host, tracking parameters such as `utm_*` removed, no trailing slash) and unique (D-05) |
-| `source` | enumeration | yes | `linkedin`, `justjoinit`, `nofluffjobs`, `pracuj`, `bulldogjob`, `company_website` (D-14) |
+| `source` | enumeration | yes | `linkedin`, `pracuj`, `justjoinit`, `bulldogjob`, `nofluffjobs`, `rocketjobs`, `joobie`, `company_website` (D-20) |
 | `seniority` | enumeration | yes | `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` (D-15) |
 | `work_mode` | enumeration | yes | `remote`, `hybrid`, `office` (D-14) |
 | `location` | text, up to 200 characters | no | Where the job is done; the company's headquarters is `Company.location` |

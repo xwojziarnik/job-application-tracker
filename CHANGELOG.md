@@ -17,6 +17,15 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- `job_offers` table: company, title, URL, source, seniority, work mode, location,
+  salary range with currency, posting date, description and notes. The database itself
+  rejects values outside the enumerations, an incomplete or invalid salary range (all of
+  `salary_min`, `salary_max` and `currency`, or none; positive; minimum not above the
+  maximum), a URL stored twice and deleting a company that has offers.
+- Enumerations of offer sources (LinkedIn, Pracuj.pl, Just Join IT, Bulldogjob, No Fluff
+  Jobs, Rocket Jobs, Joobie, company website), seniority levels including combined ones
+  such as `mid_senior`, work modes and currencies.
+
 ### Changed
 
 ### Deprecated

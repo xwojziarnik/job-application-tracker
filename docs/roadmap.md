@@ -96,8 +96,10 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 
 - [x] Decide required/optional fields and PATCH semantics (see "Deferred to each
   model" → "Job offer" in `decisions.md`).
-- [ ] Model: company FK `RESTRICT` (D-04), source (D-14), seniority (D-15), work mode,
-  salary `int` B2B net per month + currency, optional (D-03), `CHECK salary_min <= salary_max`.
+- [x] Model and migration `002`: company FK `RESTRICT` (D-04), source (D-20), seniority
+  (D-15), work mode, salary `int` B2B net per month + currency, all or nothing (D-03,
+  `ck_job_offers_salary_range`), enumerations as `VARCHAR` + `CHECK` storing values (D-02),
+  unique `url`. Tests written first (`test_enums.py`, `test_job_offer_model.py`).
 - [ ] Normalised, unique offer URL (D-05).
 - [ ] Tags: many-to-many, free and normalised (D-09), `INSERT ... ON CONFLICT DO NOTHING`.
 - [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
