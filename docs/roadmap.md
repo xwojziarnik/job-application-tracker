@@ -100,7 +100,9 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   (D-15), work mode, salary `int` B2B net per month + currency, all or nothing (D-03,
   `ck_job_offers_salary_range`), enumerations as `VARCHAR` + `CHECK` storing values (D-02),
   unique `url`. Tests written first (`test_enums.py`, `test_job_offer_model.py`).
-- [ ] Normalised, unique offer URL (D-05).
+- [x] Normalised, unique offer URL (D-05): `normalise_offer_url` in `core/urls.py`
+  (`tests/unit/test_urls.py`, written first); applied in the schema and the service
+  together with the endpoints.
 - [ ] Tags: many-to-many, free and normalised (D-09), `INSERT ... ON CONFLICT DO NOTHING`.
 - [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
 - [ ] Async relationships loaded explicitly (`selectinload`; consider `lazy="raise"`).

@@ -904,6 +904,13 @@ when made:
   (160 hours per month, D-03). Enforced by the schema and by a `CHECK` constraint.
 - **Blank text in optional fields** is stored as `null`, as for companies. All text
   fields are trimmed.
+- **URL normalisation** (`normalise_offer_url`, refines D-05; one function used by the
+  schema and the service): surrounding whitespace is trimmed; scheme and host are
+  lower-cased, the path keeps its case; the default port `:443`, the fragment (`#...`) and
+  trailing slashes are removed; tracking parameters are removed: every `utm_*` (in any
+  case), `gclid`, `fbclid` and LinkedIn's `refId`, `trackingId` and `trk`. Other query
+  parameters are kept in their order. Normalising an already normalised URL changes
+  nothing. The URL is validated (`https`, with a host) before it is normalised.
 - **Create** (`POST`) accepts every field above except `id` and the timestamps. A company
   that does not exist returns `404`; an inactive one returns `409 company_inactive`
   (D-10); a URL that is already stored (after normalisation) returns `409`.

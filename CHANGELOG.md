@@ -25,6 +25,10 @@ the new version section, updates the links below and tags the commit.
 - Enumerations of offer sources (LinkedIn, Pracuj.pl, Just Join IT, Bulldogjob, No Fluff
   Jobs, Rocket Jobs, Joobie, company website), seniority levels including combined ones
   such as `mid_senior`, work modes and currencies.
+- Normalisation of offer URLs, so one offer is stored under one spelling: scheme and host
+  in lower case, no credentials, default port, fragment, trailing slashes, tracking
+  parameters (`utm_*`, `gclid`, `fbclid`, LinkedIn's `refId`, `trackingId`, `trk`) or
+  empty parameters. It will be applied when offers are saved through the API.
 
 ### Changed
 
