@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from pydantic_core import ErrorDetails
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ErrorDetail(BaseModel):
@@ -92,9 +92,9 @@ class CompanyInactiveError(ConflictError):
 class NotFoundError(DomainError):
     """The requested resource does not exist (404)."""
 
-    status_code = status.HTTP_404_NOT_FOUND
-    code = "not_found"
-    default_message = "Resource not found"
+    status_code: int = status.HTTP_404_NOT_FOUND
+    code: str = "not_found"
+    default_message: str = "Resource not found"
 
 
 def error_response(

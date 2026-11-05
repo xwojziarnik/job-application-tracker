@@ -35,9 +35,9 @@ def _blank_to_none(value: str | None) -> str | None:
     return value
 
 
-BlankToNone = BeforeValidator(_blank_to_none)
+BlankToNone: BeforeValidator = BeforeValidator(_blank_to_none)
 
-HTTPS_URL = TypeAdapter(
+HTTPS_URL: TypeAdapter[AnyUrl] = TypeAdapter(
     Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"], host_required=True)]
 )
 

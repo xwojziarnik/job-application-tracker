@@ -20,7 +20,7 @@ from job_tracker.repositories.company import CompanyRepository
 from job_tracker.schemas.company import CompanyCreate, CompanyUpdate
 
 # Unique index on lower(name) from the companies migration; violating it means a duplicate.
-UNIQUE_NAME_INDEX = "uq_companies_lower_name"
+UNIQUE_NAME_INDEX: str = "uq_companies_lower_name"
 
 
 class CompanyService:

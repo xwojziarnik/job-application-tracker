@@ -50,7 +50,7 @@ def test_punctuation_used_in_technology_names_is_allowed(name: str, expected: st
     ["machine_learning", "ci/cd", "python!", "łódź", "naïve", "<script>", "a,b", "tag?"],
 )
 def test_name_with_a_character_outside_the_allowed_set_is_rejected(name: str) -> None:
-    with pytest.raises(ValueError, match="may contain only"):
+    with pytest.raises(ValueError, match="must contain only"):
         normalise_tag_name(name)
 
 

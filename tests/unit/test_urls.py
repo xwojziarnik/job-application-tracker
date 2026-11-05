@@ -11,7 +11,7 @@ import pytest
 
 from job_tracker.core.urls import normalise_offer_url
 
-CANONICAL = "https://justjoin.it/job-offer/acme-python-developer"
+CANONICAL: str = "https://justjoin.it/job-offer/acme-python-developer"
 
 
 def test_canonical_url_is_left_unchanged() -> None:

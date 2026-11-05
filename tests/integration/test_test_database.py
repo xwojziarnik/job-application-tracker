@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
 
 async def test_template_database_is_migrated(template_db: str, postgres_url: str) -> None:

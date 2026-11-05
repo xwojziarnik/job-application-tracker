@@ -15,7 +15,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from job_tracker.db.base import UUIDPrimaryKeyMixin
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
 
 class ScratchBase(DeclarativeBase):

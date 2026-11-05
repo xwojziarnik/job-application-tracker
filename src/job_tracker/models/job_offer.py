@@ -18,8 +18,8 @@ from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
 
 # The salary is all or nothing (decisions: "Job offer", D-03): either no salary at all, or a
 # complete range with its currency, positive and ordered.
-NO_SALARY = "salary_min IS NULL AND salary_max IS NULL AND currency IS NULL"
-COMPLETE_SALARY = (
+NO_SALARY: str = "salary_min IS NULL AND salary_max IS NULL AND currency IS NULL"
+COMPLETE_SALARY: str = (
     "salary_min IS NOT NULL AND salary_max IS NOT NULL AND currency IS NOT NULL"
     " AND salary_min > 0 AND salary_min <= salary_max"
 )

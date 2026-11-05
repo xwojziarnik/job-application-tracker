@@ -22,7 +22,7 @@ from job_tracker.main import create_app
 # On Docker Desktop it also tends to fail with "port 8080 is not available".
 os.environ.setdefault("TESTCONTAINERS_RYUK_DISABLED", "true")
 
-TEMPLATE_DB_NAME = "template_tracker"
+TEMPLATE_DB_NAME: str = "template_tracker"
 
 
 def _docker_available() -> bool:

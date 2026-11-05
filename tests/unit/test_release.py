@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 from release import ChangelogError, detect_bump, main, parse_changelog, release
 
-REPO = "https://github.com/owner/repo"
+REPO: str = "https://github.com/owner/repo"
 
-FIRST_RELEASE = """\
+FIRST_RELEASE: str = """\
 # Changelog
 
 Intro text.
@@ -25,7 +25,7 @@ Intro text.
 [Unreleased]: https://github.com/owner/repo/commits/HEAD
 """
 
-EMPTY_TEMPLATE = """\
+EMPTY_TEMPLATE: str = """\
 ## [Unreleased]
 
 ### Added

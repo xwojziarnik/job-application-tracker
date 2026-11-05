@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from job_tracker.api.deps import SessionDep
 from job_tracker.core.exceptions import DatabaseUnavailableError
 
-router = APIRouter(prefix="/health", tags=["health"])
+router: APIRouter = APIRouter(prefix="/health", tags=["health"])
 
 
 class HealthRead(BaseModel):

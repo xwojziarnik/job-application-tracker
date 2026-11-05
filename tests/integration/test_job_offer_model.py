@@ -22,12 +22,12 @@ from job_tracker.db.errors import violated_constraint
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
 from job_tracker.models import Company, JobOffer
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
-UNIQUE_URL = "uq_job_offers_url"
-COMPANY_FOREIGN_KEY = "fk_job_offers_company_id_companies"
-STRING_TOO_LONG = "22001"  # PostgreSQL error code string_data_right_truncation
-OMITTED = object()  # Marks a column left out of a raw INSERT.
+UNIQUE_URL: str = "uq_job_offers_url"
+COMPANY_FOREIGN_KEY: str = "fk_job_offers_company_id_companies"
+STRING_TOO_LONG: str = "22001"  # PostgreSQL error code string_data_right_truncation
+OMITTED: object = object()  # Marks a column left out of a raw INSERT.
 
 
 @pytest.fixture

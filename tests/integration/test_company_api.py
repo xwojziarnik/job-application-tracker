@@ -12,13 +12,13 @@ from uuid import UUID
 import pytest
 from httpx import AsyncClient
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
-COMPANIES = "/api/v1/companies"
-GET_OR_CREATE = f"{COMPANIES}/get-or-create"
-UNKNOWN_ID = "00000000-0000-4000-8000-000000000000"
+COMPANIES: str = "/api/v1/companies"
+GET_OR_CREATE: str = f"{COMPANIES}/get-or-create"
+UNKNOWN_ID: str = "00000000-0000-4000-8000-000000000000"
 
-READ_FIELDS = {
+READ_FIELDS: set[str] = {
     "id",
     "name",
     "notes",
