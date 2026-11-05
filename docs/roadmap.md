@@ -9,6 +9,8 @@ Documentation is Claude's job: during every review Claude writes missing docstri
 fixes inaccurate ones (including the response descriptions shown in Swagger), keeps the
 `[Unreleased]` section of `CHANGELOG.md`, `README.md` and the files in `docs/` (roadmap
 progress, decisions) up to date with the reviewed changes, and lists all of it in the review.
+During reviews Claude also adds missing type annotations (module constants, variables,
+parameters, return types), without changing behaviour, and lists them in the review.
 
 ## Status
 

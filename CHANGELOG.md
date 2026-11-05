@@ -29,6 +29,10 @@ the new version section, updates the links below and tags the commit.
   in lower case, no credentials, default port, fragment, trailing slashes, tracking
   parameters (`utm_*`, `gclid`, `fbclid`, LinkedIn's `refId`, `trackingId`, `trk`) or
   empty parameters. It will be applied when offers are saved through the API.
+- Normalisation of tag names, so one tag has one spelling: trimmed, lower-case, whitespace
+  replaced with `-`; only `a-z`, `0-9`, `.`, `+`, `#` and `-`, at most 50 characters (so
+  `C++`, `C#`, `.NET` and `Node.js` work), with at least one letter or digit. Names with
+  other characters or only punctuation are rejected.
 
 ### Changed
 

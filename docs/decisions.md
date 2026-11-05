@@ -923,3 +923,29 @@ when made:
 - **Delete** removes the offer and its applications (`ON DELETE CASCADE`, D-04).
 - **Read and list**: offers of an inactive company are hidden from lists by default
   (D-04). The response shape, filters and sort order are decided with the endpoints.
+
+### Tag (2026-11-05)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `name` | text, 1–50 characters | yes | Normalised (D-09) and unique (`uq_tags_name`) |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Name normalisation** (`normalise_tag_name`, refines D-09; one function used before
+  every lookup and insert): surrounding whitespace is trimmed, the name is lower-cased and
+  every run of whitespace (spaces, tabs, new lines) becomes one `-`. The result may contain
+  only `a–z`, `0–9`, `.`, `+`, `#` and `-`, must contain at least one letter or digit
+  (`---` or `.` is a typo, not a technology; `c#` and `.net` still pass), must not be empty
+  and has at most 50 characters; otherwise the function raises `ValueError`, which a schema
+  reports as `422`.
+  Underscores, slashes and non-ASCII letters are rejected, not replaced.
+- **Database check** `ck_tags_name_format`: the database itself refuses a name outside the
+  allowed characters or without a letter or digit (defence in depth, also for rows
+  written with plain SQL).
+- **Links** (`job_offer_tags`): a composite primary key `(job_offer_id, tag_id)`, so an
+  offer has a tag at most once. Deleting an offer deletes its links (`ON DELETE CASCADE`)
+  and keeps the tags; a tag used by an offer cannot be deleted (`ON DELETE RESTRICT`).
+  Tags are not deleted through the API.
+- **Tags have no endpoint of their own** except `GET /tags`; they are created with the
+  offers that use them ("get or create" with `INSERT ... ON CONFLICT DO NOTHING`, D-09).
