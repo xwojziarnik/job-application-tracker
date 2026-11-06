@@ -33,6 +33,9 @@ the new version section, updates the links below and tags the commit.
   replaced with `-`; only `a-z`, `0-9`, `.`, `+`, `#` and `-`, at most 50 characters (so
   `C++`, `C#`, `.NET` and `Node.js` work), with at least one letter or digit. Names with
   other characters or only punctuation are rejected.
+- `tags` and `job_offer_tags` tables: an offer can have many tags and a tag many offers,
+  each tag at most once per offer. The database rejects tag names that are not normalised,
+  keeps tags when an offer is deleted and refuses to delete a tag that is still in use.
 
 ### Changed
 

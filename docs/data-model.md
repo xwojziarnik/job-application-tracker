@@ -7,7 +7,7 @@ Tables and the relationships between them. Decisions referenced as `D-XX` are in
 |---|---|
 | `companies` | Implemented (stage 2, step 1) |
 | `job_offers` | Implemented (stage 2, step 2: table only, no endpoints yet) |
-| `tags`, `job_offer_tags` | Planned (stage 2, step 2) |
+| `tags`, `job_offer_tags` | Implemented (stage 2, step 2: tables only, no endpoints yet) |
 | `applications` | Planned (stage 2, step 3) |
 | `cv_documents` (files in SeaweedFS) | Planned (stage 2, step 4, D-19) |
 
@@ -18,8 +18,8 @@ then. Keep the diagram in sync with the models whenever a migration changes the 
 ```mermaid
 erDiagram
     companies ||--o{ job_offers : "posts (ON DELETE RESTRICT)"
-    job_offers ||--o{ job_offer_tags : "is tagged with"
-    tags ||--o{ job_offer_tags : "labels"
+    job_offers ||--o{ job_offer_tags : "is tagged with (ON DELETE CASCADE)"
+    tags ||--o{ job_offer_tags : "labels (ON DELETE RESTRICT)"
     job_offers ||--o{ applications : "receives (ON DELETE CASCADE)"
     cv_documents |o--o{ applications : "sent with (ON DELETE RESTRICT)"
 
@@ -56,7 +56,9 @@ erDiagram
 
     tags {
         uuid id PK
-        varchar(50) name UK "normalised"
+        varchar(50) name UK "normalised, CHECK"
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     job_offer_tags {
@@ -90,7 +92,7 @@ only for the implemented tables to keep the diagram readable.
 | From | To | Cardinality | On delete of the parent | Decisions |
 |---|---|---|---|---|
 | `companies` | `job_offers` | one company, many offers | `RESTRICT`: companies are never deleted, only deactivated; offers of an inactive company are hidden from lists | D-04, D-10 |
-| `job_offers` | `tags` | many to many, through `job_offer_tags` | the offer's links to tags are deleted; tags stay | D-09 |
+| `job_offers` | `tags` | many to many, through `job_offer_tags` (composite primary key `pk_job_offer_tags`, a tag at most once per offer) | deleting an offer deletes its links (`CASCADE`) and keeps the tags; a tag used by an offer cannot be deleted (`RESTRICT`) | D-09 |
 | `job_offers` | `applications` | one offer, many applications over time, at most one active | `CASCADE`: deleting an offer deletes its applications | D-04, D-06, D-16 |
 | `cv_documents` | `applications` | one CV version, used by any number of applications; an application has at most one CV (optional) | `RESTRICT`: a CV used by an application cannot be deleted; deleting an application keeps its CV | D-19 |
 
@@ -100,7 +102,7 @@ only for the implemented tables to keep the diagram readable.
 |---|---|---|---|
 | `companies` | name, regardless of case | unique index `uq_companies_lower_name` on `lower(name)` | D-05 |
 | `job_offers` | normalised URL | unique constraint `uq_job_offers_url` | D-05 |
-| `tags` | normalised name | unique constraint | D-09 |
+| `tags` | normalised name | unique constraint `uq_tags_name` | D-09 |
 | `applications` | one active application per offer | partial unique index on `job_offer_id` for non-final statuses | D-06, D-16 |
 | `cv_documents` | file content (`sha256`) and object key | unique constraints | D-19 |
 
@@ -115,6 +117,7 @@ Names follow the naming convention in `db/base.py` (`ck_<table>_<name>`).
 | `job_offers` | `ck_job_offers_seniority` | `seniority` is one of the seniority values, single or combined | D-02, D-15 |
 | `job_offers` | `ck_job_offers_work_mode` | `work_mode` is `remote`, `hybrid` or `office` | D-02, D-14 |
 | `job_offers` | `ck_job_offers_currency` | `currency` is `PLN`, `EUR` or `USD` | D-02, D-14 |
+| `tags` | `ck_tags_name_format` | `name` contains only `a-z`, `0-9`, `.`, `+`, `#`, `-` and at least one letter or digit | D-09 |
 | `job_offers` | `ck_job_offers_salary_range` | no salary at all, or `salary_min`, `salary_max` and `currency` all set with `0 < salary_min <= salary_max` | D-03 |
 
 Enumerations store their values (`mid_senior`), not the Python member names

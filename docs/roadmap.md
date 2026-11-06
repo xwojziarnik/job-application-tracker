@@ -11,6 +11,9 @@ fixes inaccurate ones (including the response descriptions shown in Swagger), ke
 progress, decisions) up to date with the reviewed changes, and lists all of it in the review.
 During reviews Claude also adds missing type annotations (module constants, variables,
 parameters, return types), without changing behaviour, and lists them in the review.
+Every new step is described up front in detail: files, classes and their names, the order
+of work, the library APIs to use, the pitfalls and how each test maps to the code, so the
+implementation does not need repeated questions.
 
 ## Status
 
@@ -105,7 +108,12 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [x] Normalised, unique offer URL (D-05): `normalise_offer_url` in `core/urls.py`
   (`tests/unit/test_urls.py`, written first); applied in the schema and the service
   together with the endpoints.
-- [ ] Tags: many-to-many, free and normalised (D-09), `INSERT ... ON CONFLICT DO NOTHING`.
+- [x] Tags, part 1: `normalise_tag_name` in `core/tags.py`; `tags` (unique name,
+  `ck_tags_name_format`) and `job_offer_tags` (composite primary key, `CASCADE` from offers,
+  `RESTRICT` to tags), migration `003`. Tests written first (`test_tags.py`,
+  `test_tag_model.py`).
+- [ ] Tags, part 2: "get or create" with `INSERT ... ON CONFLICT DO NOTHING` (D-09), in the
+  offer repository.
 - [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
 - [ ] Async relationships loaded explicitly (`selectinload`; consider `lazy="raise"`).
 - [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
