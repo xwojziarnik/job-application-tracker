@@ -13,7 +13,8 @@ During reviews Claude also adds missing type annotations (module constants, vari
 parameters, return types), without changing behaviour, and lists them in the review.
 Every new step is described up front in detail: files, classes and their names, the order
 of work, the library APIs to use, the pitfalls and how each test maps to the code, so the
-implementation does not need repeated questions.
+implementation does not need repeated questions. Implementation guidelines are given as
+pseudocode, not as ready-to-paste code.
 
 ## Status
 
@@ -115,7 +116,10 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [ ] Tags, part 2: "get or create" with `INSERT ... ON CONFLICT DO NOTHING` (D-09), in the
   offer repository.
 - [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
-- [ ] Async relationships loaded explicitly (`selectinload`; consider `lazy="raise"`).
+- [x] Relationships `JobOffer.company` and `JobOffer.tags` with `lazy="raise"`, loaded
+  explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
+  deleting offers (`test_job_offer_relationships.py`, written first).
+- [ ] Job offer schemas: create, update (PATCH), read, with salary, URL and tag rules.
 - [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
   values, tag, salary), `GET /tags`. Deleting an offer cascades to its applications (D-04).
 - [ ] Tests.
