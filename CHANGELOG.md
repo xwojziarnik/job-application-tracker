@@ -36,6 +36,14 @@ the new version section, updates the links below and tags the commit.
 - `tags` and `job_offer_tags` tables: an offer can have many tags and a tag many offers,
   each tag at most once per offer. The database rejects tag names that are not normalised,
   keeps tags when an offer is deleted and refuses to delete a tag that is still in use.
+- Job offer schemas for creating, updating and reading an offer: text is trimmed, blank
+  optional text is stored as `null`, the URL must be `https` and is normalised, tags are
+  normalised with duplicates merged (at most 20), the salary is all or nothing with the
+  minimum not above the maximum, and the posting date cannot be in the future (in the
+  `Europe/Warsaw` calendar). An update changes only the fields sent; the company of an
+  offer cannot be changed.
+- Job offer repository: offers are read with their company and tags, and tags are created
+  on the fly without failing when another request stores the same name at the same time.
 
 ### Changed
 

@@ -113,13 +113,18 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   `ck_tags_name_format`) and `job_offer_tags` (composite primary key, `CASCADE` from offers,
   `RESTRICT` to tags), migration `003`. Tests written first (`test_tags.py`,
   `test_tag_model.py`).
-- [ ] Tags, part 2: "get or create" with `INSERT ... ON CONFLICT DO NOTHING` (D-09), in the
-  offer repository.
+- [x] Tags, part 2: "get or create" (part of the job offer repository below).
 - [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
 - [x] Relationships `JobOffer.company` and `JobOffer.tags` with `lazy="raise"`, loaded
   explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
   deleting offers (`test_job_offer_relationships.py`, written first).
-- [ ] Job offer schemas: create, update (PATCH), read, with salary, URL and tag rules.
+- [x] Job offer schemas: create, update (PATCH), read, with salary, URL and tag rules
+  (`schemas/job_offer.py`, shared helpers in `utils.py`; `test_job_offer_schemas.py`,
+  written first).
+- [x] Job offer repository: add, get with company and tags, update, delete, "get or create"
+  tags with `INSERT ... ON CONFLICT DO NOTHING` (D-09) (`repositories/job_offer.py`;
+  `test_job_offer_repository.py`, written first). The list with filters comes with the
+  endpoints.
 - [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
   values, tag, salary), `GET /tags`. Deleting an offer cascades to its applications (D-04).
 - [ ] Tests.
