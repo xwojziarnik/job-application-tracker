@@ -9,6 +9,7 @@ import re
 
 # Must match the length of the tags.name column.
 MAX_TAG_LENGTH: int = 50
+MAX_TAGS_PER_OFFER: int = 20
 # The allowed characters as the body of a regular-expression character class; shared with
 # the database check ``ck_tags_name_format``, so both enforce the same rule. "-" stays last:
 # in the middle of a class it would mean a range.

@@ -11,64 +11,27 @@ from uuid import UUID
 
 from pydantic import (
     AfterValidator,
-    AnyUrl,
     BaseModel,
-    BeforeValidator,
     ConfigDict,
     StringConstraints,
-    TypeAdapter,
-    UrlConstraints,
-    ValidationError,
     field_validator,
 )
 
-
-def _blank_to_none(value: str | None) -> str | None:
-    """Trim text and turn blank text into ``None``; leave other values to the type check.
-
-    Runs before the type and length checks (``BeforeValidator``), so ``"  "`` never
-    reaches them as text and "no value" has a single representation.
-    """
-    if isinstance(value, str):
-        value = value.strip()
-        return value or None
-    return value
-
-
-BlankToNone: BeforeValidator = BeforeValidator(_blank_to_none)
-
-HTTPS_URL: TypeAdapter[AnyUrl] = TypeAdapter(
-    Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"], host_required=True)]
-)
-
-
-def _require_https_url(value: str) -> str:
-    """Check that ``value`` is an ``https`` URL with a host and return it unchanged.
-
-    The URL is only validated, not normalised: ``HttpUrl``/``AnyUrl`` would add a trailing
-    slash to ``https://acme.com``. The ``ValidationError`` of the URL type is replaced by a
-    ``ValueError``, which Pydantic reports as an error of this field.
-    """
-    try:
-        HTTPS_URL.validate_python(value)
-    except ValidationError:
-        raise ValueError("Must be an https URL") from None
-    return value
-
+from job_tracker.utils import BLANK_TO_NONE, require_https_url
 
 CompanyName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200, min_length=1)]
 CompanyNotes = Annotated[
-    Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)] | None, BlankToNone
+    Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)] | None, BLANK_TO_NONE
 ]
 CompanyLocation = Annotated[
-    Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None, BlankToNone
+    Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None, BLANK_TO_NONE
 ]
 CompanyIndustry = Annotated[
-    Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None, BlankToNone
+    Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None, BLANK_TO_NONE
 ]
 CompanyWebsite = Annotated[
-    Annotated[str, StringConstraints(max_length=2048), AfterValidator(_require_https_url)] | None,
-    BlankToNone,
+    Annotated[str, StringConstraints(max_length=2048), AfterValidator(require_https_url)] | None,
+    BLANK_TO_NONE,
 ]
 
 
