@@ -17,7 +17,7 @@ from pydantic import (
     field_validator,
 )
 
-from job_tracker.utils import BLANK_TO_NONE, require_https_url
+from job_tracker.schemas.fields import BLANK_TO_NONE, require_https_url
 
 CompanyName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200, min_length=1)]
 CompanyNotes = Annotated[

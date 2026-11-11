@@ -215,8 +215,9 @@ async def test_filters_are_combined(db_client: AsyncClient) -> None:
         ({"seniority": "principal"}, "seniority"),
         ({"limit": 101}, "limit"),
         ({"tag": "ci/cd"}, "tag.0"),
+        ({"work_mode": ["remote"] * 4}, "work_mode"),
     ],
-    ids=["sort", "seniority", "limit", "tag"],
+    ids=["sort", "seniority", "limit", "tag", "too-many-work-modes"],
 )
 async def test_invalid_query_parameter_returns_422(
     db_client: AsyncClient, params: dict[str, Any], field: str

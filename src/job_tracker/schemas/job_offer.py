@@ -26,7 +26,7 @@ from job_tracker.core.tags import MAX_TAGS_PER_OFFER, normalise_tag_name
 from job_tracker.core.urls import normalise_offer_url
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
 from job_tracker.schemas.company import CompanySummary
-from job_tracker.utils import BLANK_TO_NONE, require_https_url
+from job_tracker.schemas.fields import BLANK_TO_NONE, require_https_url
 
 # "Today" for the posting date is the owner's calendar day, not the server's (D-11): a
 # container runs in UTC, where shortly after midnight in Poland it is still yesterday.
@@ -241,12 +241,14 @@ class JobOfferFilters(BaseModel):
     """
 
     company_id: UUID | None = None
-    work_mode: list[WorkMode] = Field(default_factory=list)
+    # Repeatable enum filters are capped at the number of values, so a request cannot send
+    # thousands of them (each value given once is enough).
+    work_mode: list[WorkMode] = Field(default_factory=list, max_length=len(WorkMode))
     seniority: Seniority | None = None
     tag: TagList = Field(default_factory=list)
     min_salary: SalaryAmount | None = None
     currency: Currency | None = None
-    source: list[OfferSource] = Field(default_factory=list)
+    source: list[OfferSource] = Field(default_factory=list, max_length=len(OfferSource))
     search: OfferSearch = None
     include_inactive: bool = False
     sort: JobOfferSort = JobOfferSort.NEWEST
