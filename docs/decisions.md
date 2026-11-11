@@ -32,6 +32,7 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
 | D-19 | Storing CV versions                       | Accepted | Optional CV per application, PDF in self-hosted SeaweedFS through the S3 API |
 | D-20 | Offer sources                             | Accepted | Adds `rocketjobs` and `joobie` to the D-14 sources |
+| D-21 | Job offer endpoints and offer list       | Accepted | `/job-offers`, company summary in responses, `204` on delete; list filters, sort and `GET /tags` |
 
 ---
 
@@ -840,6 +841,76 @@ code (D-02).
 **Consequences.**
 - The `CHECK` constraint of `job_offers.source` lists these eight values. Adding another
   job board later is a new migration and a new decision entry.
+
+---
+
+## D-21: Job offer endpoints and offer list
+
+**Status:** Accepted (2026-11-11)
+
+**Context.** The job offer service is ready (create, read, update, delete). Before exposing
+it over HTTP, the shape of the endpoints and of the offer list has to be fixed: the
+resource path, how much of the company a response carries, and how the list is filtered,
+sorted and paginated. Offers are mostly added through an AI-assisted session, which also
+needs the existing tag names to avoid new spellings.
+
+**Decision.**
+
+*Endpoints*
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| `POST` | `/api/v1/job-offers` | `201` | errors from the service: `404` company, `409 company_inactive`, `409 job_offer_already_exists` |
+| `GET` | `/api/v1/job-offers` | `200` | paginated list (D-08), filters and sort below |
+| `GET` | `/api/v1/job-offers/{job_offer_id}` | `200` | also offers of an inactive company (D-04) |
+| `PATCH` | `/api/v1/job-offers/{job_offer_id}` | `200` | `422 invalid_salary`, `409 job_offer_already_exists` |
+| `DELETE` | `/api/v1/job-offers/{job_offer_id}` | `204` | no body; the offer's tags stay |
+| `GET` | `/api/v1/tags` | `200` | tag names, alphabetical, paginated, optional `search` |
+
+- **Path** `/job-offers`, not `/offers`: matches the model and the table, and "offer" will
+  also mean an offer received in an application (status `offer`, D-16).
+- **Company summary in every offer response** instead of only `company_id`:
+  `"company": {"id", "name", "is_active"}`. Enough to show which company an offer belongs
+  to without a second request; the company is already loaded with the offer
+  (`joinedload`), so it costs no extra query.
+
+*List filters* (`GET /job-offers`, all optional, combined with AND)
+
+| Parameter | Matches |
+|---|---|
+| `company_id` | offers of one company |
+| `work_mode` | repeatable; any of the given values (`?work_mode=remote&work_mode=hybrid`) |
+| `seniority` | one level, including the combined values that contain it: `mid` matches `junior_mid`, `mid` and `mid_senior` (D-15) |
+| `tag` | repeatable; the offer has **all** of the given tags (names normalised like stored tags) |
+| `min_salary` + `currency` | offers that can pay at least this much: `salary_max >= min_salary` in that currency; offers without a salary are left out. `min_salary` without `currency` is rejected with `422` |
+| `source` | repeatable; any of the given offer sources |
+| `search` | a fragment of the title, regardless of case; `%` and `_` taken literally |
+| `include_inactive` | offers of inactive companies are hidden unless `true` (D-04) |
+
+*Sort* (`sort`, from a closed list; never a column name from the client)
+
+| Value | Order |
+|---|---|
+| `newest` (default) | `posted_on` descending with missing dates last, then `created_at` descending, then `id` |
+| `salary` | `salary_max` descending with offers without a salary last, then `id` |
+| `title` | `title` regardless of case, then `id` |
+
+`id` always ends the order, so pages never repeat or skip offers (D-08).
+
+**Rationale.** The filters are the questions asked when looking for a job (remote, mid,
+Python, at least so much, from this job board). Repeatable `work_mode` and `source` widen
+the result, repeatable `tag` narrows it, which matches how they are used. Comparing
+`min_salary` with `salary_max` keeps offers with wide ranges. Requiring `currency` avoids
+the hidden assumption that every amount is in PLN.
+
+**Consequences.**
+- Two pull requests: (A) create, read, update and delete endpoints with the company
+  summary; (B) the list with filters, sort and pagination, `GET /tags`, and the release
+  `0.5.0`.
+- `JobOfferRead` replaces `company_id` with the company summary; responses of every offer
+  endpoint must have the company loaded.
+- The list needs indexes later if it gets slow (e.g. on `company_id`, `posted_on`); with
+  hundreds of offers a plain scan is fine.
 
 ---
 

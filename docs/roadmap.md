@@ -16,7 +16,10 @@ of work, the library APIs to use, the pitfalls and how each test maps to the cod
 implementation does not need repeated questions. Implementation guidelines are given as
 pseudocode, not as ready-to-paste code. Suggested commands use the `Makefile` targets
 (`make test`, `make check`, `make audit`, ...) instead of calling the tools (`pytest`,
-`pip-audit`, ...) directly.
+`pip-audit`, ...) directly. Pull requests stay small: Claude reminds the owner to open and
+merge one as soon as a coherent, green part is done (typically one or two roadmap items, or
+when the branch passes about 10 changed files or 500 changed lines), and says in each step
+whether it is a good moment to merge.
 
 ## Status
 
@@ -121,7 +124,6 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   (salary checked after merging with the stored values, `422 invalid_salary`), delete;
   duplicate URL `409 job_offer_already_exists`; rejected changes roll back new tags. The
   salary rule is shared in `core/salary.py`.
-- [ ] Offers of an inactive company hidden from lists by default (with the list endpoint).
 - [x] Relationships `JobOffer.company` and `JobOffer.tags` with `lazy="raise"`, loaded
   explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
   deleting offers (`test_job_offer_relationships.py`, written first).
@@ -132,9 +134,11 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   tags with `INSERT ... ON CONFLICT DO NOTHING` (D-09) (`repositories/job_offer.py`;
   `test_job_offer_repository.py`, written first). The list with filters comes with the
   endpoints.
-- [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
-  values, tag, salary), `GET /tags`. Deleting an offer cascades to its applications (D-04).
-- [ ] Tests.
+- [x] Decide the endpoints and the offer list (D-21).
+- [ ] PR A (`feat/job-offer-endpoints`): `POST`, `GET /{id}`, `PATCH`, `DELETE` under
+  `/job-offers`, company summary in responses, API tests.
+- [ ] PR B: `GET /job-offers` with filters, sort and pagination (D-21), offers of inactive
+  companies hidden by default, `GET /tags`, API tests; release `0.5.0`.
 
 ### Step 3: Application
 
