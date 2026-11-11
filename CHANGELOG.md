@@ -25,6 +25,10 @@ the new version section, updates the links below and tags the commit.
 
 ### Fixed
 
+- `make install` refreshes the pyenv shims, so the dev tools it installs (`ruff`, `mypy`,
+  ...) are found right away in a new virtualenv; pyenv does that by itself only after
+  `pip install`, not after `uv sync`.
+
 ### Security
 
 ## [0.5.3] - 2026-11-11

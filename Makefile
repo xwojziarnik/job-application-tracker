@@ -26,6 +26,8 @@ install: ## Install the locked app and dev tools (uv.lock) and the pre-commit ho
 	@python -c 'import sys; sys.exit(sys.prefix == sys.base_prefix)' \
 		|| { echo "Activate the project's virtualenv first"; exit 1; }
 	uv sync --locked --inexact
+	@# pyenv rebuilds its shims (ruff, mypy, ...) only after pip installs, not after uv.
+	@if command -v pyenv >/dev/null; then pyenv rehash; fi
 	pre-commit install
 
 lock: ## Update uv.lock after changing dependencies in pyproject.toml
