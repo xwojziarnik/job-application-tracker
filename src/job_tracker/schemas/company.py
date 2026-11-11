@@ -80,3 +80,16 @@ class CompanyRead(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CompanySummary(BaseModel):
+    """The company of a job offer as shown in offer responses (D-21).
+
+    Enough to show which company an offer belongs to without a second request; the full
+    company is under ``/companies/{company_id}``.
+    """
+
+    id: UUID
+    name: str
+    is_active: bool
+    model_config = ConfigDict(from_attributes=True)

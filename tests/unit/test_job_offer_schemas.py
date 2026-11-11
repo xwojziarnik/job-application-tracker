@@ -336,11 +336,15 @@ def test_update_rejects_minimum_above_maximum_when_both_are_sent() -> None:
 # --- JobOfferRead -------------------------------------------------------------------------
 
 
-def test_read_returns_tag_names_from_the_model() -> None:
+def _stored_offer(**fields: Any) -> SimpleNamespace:
+    """An object shaped like a loaded ``JobOffer``: company and tags already loaded."""
     now = datetime(2026, 11, 6, 12, 0, tzinfo=UTC)
-    stored = SimpleNamespace(
+    values: dict[str, Any] = dict(
         id=uuid.uuid4(),
         company_id=uuid.UUID(COMPANY_ID),
+        company=SimpleNamespace(
+            id=uuid.UUID(COMPANY_ID), name="ACME", is_active=True, notes="internal note"
+        ),
         title="Python Developer",
         url="https://justjoin.it/job-offer/acme",
         source=OfferSource.JUSTJOINIT,
@@ -357,14 +361,17 @@ def test_read_returns_tag_names_from_the_model() -> None:
         created_at=now,
         updated_at=now,
     )
+    return SimpleNamespace(**(values | fields))
 
-    read = JobOfferRead.model_validate(stored)
+
+def test_read_returns_tag_names_from_the_model() -> None:
+    read = JobOfferRead.model_validate(_stored_offer())
 
     assert read.tags == ["fastapi", "python"]
     assert read.model_dump(mode="json")["seniority"] == "mid_senior"
     assert set(read.model_dump()) == {
         "id",
-        "company_id",
+        "company",
         "title",
         "url",
         "source",
@@ -381,3 +388,20 @@ def test_read_returns_tag_names_from_the_model() -> None:
         "created_at",
         "updated_at",
     }
+
+
+def test_read_carries_a_summary_of_the_company() -> None:
+    # D-21: enough to show the company without a second request, nothing more.
+    read = JobOfferRead.model_validate(_stored_offer())
+
+    assert read.model_dump(mode="json")["company"] == {
+        "id": COMPANY_ID,
+        "name": "ACME",
+        "is_active": True,
+    }
+
+
+def test_read_sorts_tag_names() -> None:
+    tags = [SimpleNamespace(name="python"), SimpleNamespace(name="aws")]
+
+    assert JobOfferRead.model_validate(_stored_offer(tags=tags)).tags == ["aws", "python"]

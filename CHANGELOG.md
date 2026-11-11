@@ -50,6 +50,17 @@ the new version section, updates the links below and tags the commit.
   leave the salary incomplete or with the minimum above the maximum returns
   `422 invalid_salary`. A rejected change stores nothing, not even new tags.
 - Tags of an offer are always returned in alphabetical order.
+- Job offer endpoints under `/api/v1/job-offers`:
+  - `POST /job-offers` creates an offer (`201`; `404` for an unknown company,
+    `409 company_inactive`, `409 job_offer_already_exists` for a URL already stored in any
+    spelling);
+  - `GET /job-offers/{job_offer_id}` returns an offer, also of an inactive company (`404` if
+    unknown);
+  - `PATCH /job-offers/{job_offer_id}` changes only the fields sent (`422 invalid_salary`,
+    `409 job_offer_already_exists`);
+  - `DELETE /job-offers/{job_offer_id}` deletes an offer (`204`); its tags stay.
+
+  Every offer response carries a summary of its company (`id`, `name`, `is_active`).
 
 ### Changed
 

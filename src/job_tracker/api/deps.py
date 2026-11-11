@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from job_tracker.schemas.pagination import PaginationParams
 from job_tracker.services.company import CompanyService
+from job_tracker.services.job_offer import JobOfferService
 
 
 async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
@@ -32,3 +33,11 @@ CompanyServiceDep = Annotated[CompanyService, Depends(get_company_service)]
 # Query() spreads the model into separate query parameters (?limit=...&offset=...);
 # without it FastAPI would expect the model as the request body.
 PaginationDep = Annotated[PaginationParams, Query()]
+
+
+def get_job_offer_service(session: SessionDep) -> JobOfferService:
+    """Return a ``JobOfferService`` working in this request's session."""
+    return JobOfferService(session)
+
+
+JobOfferServiceDep = Annotated[JobOfferService, Depends(get_job_offer_service)]

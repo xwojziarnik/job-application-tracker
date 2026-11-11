@@ -52,7 +52,9 @@ class JobOfferService:
 
         tags = await self.offers.get_or_create_tags(data.tags)
 
-        offer = JobOffer(**data.model_dump(exclude={"tags"}), tags=tags)
+        offer = JobOffer(
+            **data.model_dump(exclude={"tags", "company_id"}), company=company, tags=tags
+        )
         try:
             await self.offers.add_offer(offer)
         except IntegrityError as error:
