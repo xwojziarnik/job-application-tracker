@@ -106,6 +106,19 @@ only for the implemented tables to keep the diagram readable.
 | `applications` | one active application per offer | partial unique index on `job_offer_id` for non-final statuses | D-06, D-16 |
 | `cv_documents` | file content (`sha256`) and object key | unique constraints | D-19 |
 
+## Foreign key indexes
+
+PostgreSQL does not index the referencing side of a foreign key. Every foreign key starts
+an index (or the primary key), so filtering by the parent and the `RESTRICT`/`CASCADE`
+checks on delete do not scan the whole table; `tests/integration/test_schema.py` fails
+when a new foreign key has none.
+
+| Table | Columns | Index |
+|---|---|---|
+| `job_offers` | `company_id` | `ix_job_offers_company_id` |
+| `job_offer_tags` | `job_offer_id` | primary key `pk_job_offer_tags` (`job_offer_id`, `tag_id`) |
+| `job_offer_tags` | `tag_id` | `ix_job_offer_tags_tag_id` |
+
 ## Check constraints
 
 Rules the database enforces on its own, also for rows written outside the application.
