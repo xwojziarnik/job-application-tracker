@@ -97,6 +97,25 @@ class NotFoundError(DomainError):
     default_message: str = "Resource not found"
 
 
+class JobOfferAlreadyExistsError(ConflictError):
+    """A job offer with the same normalised URL already exists (D-05)."""
+
+    code: str = "job_offer_already_exists"
+    default_message: str = "A job offer with this URL already exists"
+
+
+class InvalidSalaryError(DomainError):
+    """The salary would be incomplete or out of order after a change (422, D-03).
+
+    Raised by the service, which sees the stored values; the request schemas report
+    their own salary errors as ``validation_error``.
+    """
+
+    status_code: int = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code: str = "invalid_salary"
+    default_message: str = "The salary must be complete (minimum, maximum and currency) or empty"
+
+
 def error_response(
     status_code: int,
     code: str,

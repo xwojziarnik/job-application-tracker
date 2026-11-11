@@ -5,7 +5,6 @@ update schemas. URLs and tags are stored normalised (``normalise_offer_url``,
 ``normalise_tag_name``), so the unique constraints and tag filters see one spelling.
 """
 
-from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Annotated, Self
 from uuid import UUID
@@ -21,6 +20,7 @@ from pydantic import (
     model_validator,
 )
 
+from job_tracker.core.salary import ensure_valid_salary
 from job_tracker.core.tags import MAX_TAGS_PER_OFFER, normalise_tag_name
 from job_tracker.core.urls import normalise_offer_url
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
@@ -124,21 +124,7 @@ class JobOfferCreate(BaseModel):
         the same rule as ``ck_job_offers_salary_range`` in the database; positive amounts are
         already checked by ``SalaryAmount``.
         """
-        provided = [
-            field
-            for field in (self.salary_min, self.salary_max, self.currency)
-            if field is not None
-        ]
-
-        if 0 < len(provided) < 3:
-            raise ValueError("salary_min, salary_max and currency must be set together")
-        if (
-            self.salary_min is not None
-            and self.salary_max is not None
-            and self.salary_min > self.salary_max
-        ):
-            raise ValueError("salary_min must not be greater than salary_max")
-
+        ensure_valid_salary(self.salary_min, self.salary_max, self.currency)
         return self
 
 
@@ -223,6 +209,8 @@ class JobOfferRead(BaseModel):
     @classmethod
     def tag_names(cls, value: object) -> object:
         """Turn ``Tag`` objects into their names; names given as text are kept."""
-        if isinstance(value, Iterable):
-            return [element.name if hasattr(element, "name") else element for element in value]
+        if isinstance(value, list):
+            return sorted(
+                [element.name if hasattr(element, "name") else element for element in value]
+            )
         return value

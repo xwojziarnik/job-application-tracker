@@ -44,6 +44,12 @@ the new version section, updates the links below and tags the commit.
   offer cannot be changed.
 - Job offer repository: offers are read with their company and tags, and tags are created
   on the fly without failing when another request stores the same name at the same time.
+- Job offer use cases: create, read, update and delete. An unknown company or offer
+  returns `404`, adding an offer to an inactive company `409 company_inactive`, and a URL
+  already stored (in any spelling) `409 job_offer_already_exists`. An update that would
+  leave the salary incomplete or with the minimum above the maximum returns
+  `422 invalid_salary`. A rejected change stores nothing, not even new tags.
+- Tags of an offer are always returned in alphabetical order.
 
 ### Changed
 

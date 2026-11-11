@@ -116,7 +116,12 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   `RESTRICT` to tags), migration `003`. Tests written first (`test_tags.py`,
   `test_tag_model.py`).
 - [x] Tags, part 2: "get or create" (part of the job offer repository below).
-- [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
+- [x] Job offer service (`services/job_offer.py`; `test_job_offer_service.py`, written
+  first): create (unknown company `404`, inactive company `409`, D-10), read, update
+  (salary checked after merging with the stored values, `422 invalid_salary`), delete;
+  duplicate URL `409 job_offer_already_exists`; rejected changes roll back new tags. The
+  salary rule is shared in `core/salary.py`.
+- [ ] Offers of an inactive company hidden from lists by default (with the list endpoint).
 - [x] Relationships `JobOffer.company` and `JobOffer.tags` with `lazy="raise"`, loaded
   explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
   deleting offers (`test_job_offer_relationships.py`, written first).
