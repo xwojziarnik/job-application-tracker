@@ -24,6 +24,7 @@ from job_tracker.core.salary import ensure_valid_salary
 from job_tracker.core.tags import MAX_TAGS_PER_OFFER, normalise_tag_name
 from job_tracker.core.urls import normalise_offer_url
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
+from job_tracker.schemas.company import CompanySummary
 from job_tracker.utils import BLANK_TO_NONE, require_https_url
 
 # "Today" for the posting date is the owner's calendar day, not the server's (D-11): a
@@ -187,7 +188,7 @@ class JobOfferRead(BaseModel):
     """
 
     id: UUID
-    company_id: UUID
+    company: CompanySummary
     title: str
     url: str
     source: OfferSource
