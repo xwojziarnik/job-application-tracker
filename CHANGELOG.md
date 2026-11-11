@@ -19,10 +19,6 @@ the new version section, updates the links below and tags the commit.
 
 ### Changed
 
-- The Docker image runs on Python 3.15 (`python:3.15-slim`, was 3.14), updated by
-  Dependabot; CI now tests on Python 3.15 too, the version that ships. Python 3.13 stays
-  the minimum supported version.
-
 ### Deprecated
 
 ### Removed
@@ -30,6 +26,14 @@ the new version section, updates the links below and tags the commit.
 ### Fixed
 
 ### Security
+
+## [0.5.3] - 2026-11-11
+
+### Changed
+
+- The Docker image runs on Python 3.15 (`python:3.15-slim`, was 3.14), updated by
+  Dependabot; CI now tests on Python 3.15 too, the version that ships. Python 3.13 stays
+  the minimum supported version.
 
 ## [0.5.2] - 2026-11-11
 
@@ -252,7 +256,8 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...v0.5.0
