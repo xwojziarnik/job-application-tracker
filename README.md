@@ -7,7 +7,7 @@ interviews and notes. Built as a production-style backend project with a focus o
 architecture, testing and security.
 
 **Stack:** Python 3.14 · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL 17 · Alembic ·
-Pydantic v2 · pytest · Docker
+Pydantic v2 · uv · pytest · Docker
 
 ## Features
 
@@ -67,10 +67,11 @@ docker compose -f docker-compose.yml up --build
 
 ## Local development
 
-Requires Python 3.13+ (3.14 recommended) and Docker.
+Requires Python 3.13+ (3.14 recommended), [uv](https://docs.astral.sh/uv/) and Docker.
+Create and activate a virtualenv first (e.g. with pyenv); `make install` installs into it.
 
 ```bash
-make install                   # app + dev tools (pip 25.1+ for --group) and the pre-commit hook
+make install                   # locked app + dev tools (uv.lock) and the pre-commit hook
 cp .env.example .env
 make db                        # PostgreSQL only
 make migrate                   # apply migrations
@@ -78,6 +79,10 @@ make run                       # API with live reload
 ```
 
 `make` (or `make help`) lists every task in the [`Makefile`](Makefile).
+
+**Dependencies** are declared in `pyproject.toml` (minimum versions) and pinned with hashes
+in `uv.lock`, which local installs, CI and the Docker image all use (D-22). After adding or
+changing a dependency, run `make lock` and commit both files.
 
 ## Configuration
 
@@ -193,13 +198,16 @@ running; in CI a missing Docker fails the build.
 ## Security
 
 - **Code:** ruff security rules (`S`, the bandit rule set) run on every lint.
-- **Dependencies:** `pip-audit` runs in CI on every push and pull request, and weekly to catch
-  newly published vulnerabilities.
-- **Updates:** Dependabot opens weekly PRs for Python packages and GitHub Actions.
-- **Supply chain:** GitHub Actions are pinned to commit SHAs; the CI token is read-only.
+- **Dependencies:** versions and hashes are locked in `uv.lock`; `pip-audit` checks the
+  locked versions in CI on every push and pull request, and weekly to catch newly published
+  vulnerabilities.
+- **Updates:** Dependabot opens weekly PRs for Python packages (`uv.lock`), Docker images and
+  GitHub Actions.
+- **Supply chain:** GitHub Actions are pinned to commit SHAs and the uv image to a digest;
+  the CI token is read-only.
 - **Configuration:** secrets come only from the environment; `.env` is gitignored, and
   production requires an explicit `DATABASE_URL`.
-- **Runtime:** the Docker image runs as a non-root user; error responses do not expose
+- **Runtime:** the Docker image runs as a non-root user and contains no build tools (uv); error responses do not expose
   internal details.
 
 ## CI
@@ -207,8 +215,8 @@ running; in CI a missing Docker fails the build.
 GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) runs on pushes to `main`, on pull
 requests and weekly:
 
-1. Install dependencies
-2. Dependency audit (`pip-audit`)
+1. Install dependencies from `uv.lock` (fails when the lock is out of date)
+2. Dependency audit (`pip-audit` on the locked versions)
 3. Lint and formatting (`ruff`)
 4. Changelog format check
 5. Type check (`mypy`)

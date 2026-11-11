@@ -20,19 +20,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      # Installs a pinned uv and Python, and puts the project's .venv on PATH for later steps.
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
+          version: "0.13.7"
           python-version: "3.14"
-          cache: pip
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
+      # --locked fails the build when uv.lock does not match pyproject.toml (D-22).
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e . --group dev
+        run: uv sync --locked
 
-      # Fails the build when any installed package has a known vulnerability.
+      # Fails the build when any locked package has a known vulnerability.
       - name: Dependency audit
-        run: pip-audit --skip-editable
+        shell: bash # explicit bash adds pipefail, so a failed export fails the step
+        run: |
+          uv export --locked --all-groups --no-emit-project --format requirements-txt --quiet \
+            | pip-audit -r /dev/stdin --disable-pip --require-hashes --progress-spinner off
 
       - name: Lint
         run: |

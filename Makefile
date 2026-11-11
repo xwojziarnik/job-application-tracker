@@ -2,6 +2,7 @@
 # Commands run in the active Python environment (the pyenv virtualenv of this project).
 
 .DEFAULT_GOAL := help
+SHELL := /bin/bash
 
 # Optional test selection for the test targets:
 #   t = a test file, directory or single test, e.g. t=tests/unit/test_tags.py
@@ -9,15 +10,26 @@
 t ?=
 k ?=
 PYTEST_SELECT = $(if $(k),-k "$(k)")
-.PHONY: help install format lint typecheck test test-unit test-integration audit check ci \
+
+# uv works on the active Python environment instead of creating a .venv (D-22). pyenv
+# resolves `python` to the project's virtualenv even when $VIRTUAL_ENV is not set.
+export UV_PROJECT_ENVIRONMENT := $(shell python -c 'import sys; print(sys.prefix)')
+export UV_PYTHON := $(UV_PROJECT_ENVIRONMENT)/bin/python
+
+.PHONY: help install lock format lint typecheck test test-unit test-integration audit check ci \
 	db migrate migration downgrade run
 
 help: ## List the available tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
-install: ## Install the app and the dev tools, and the pre-commit hook
-	pip install -e . --group dev
+install: ## Install the locked app and dev tools (uv.lock) and the pre-commit hook
+	@python -c 'import sys; sys.exit(sys.prefix == sys.base_prefix)' \
+		|| { echo "Activate the project's virtualenv first"; exit 1; }
+	uv sync --locked --inexact
 	pre-commit install
+
+lock: ## Update uv.lock after changing dependencies in pyproject.toml
+	uv lock
 
 format: ## Format the code and fix lint errors that can be fixed automatically
 	ruff format . && ruff check --fix .
@@ -37,8 +49,10 @@ test-unit: ## Unit tests only (no Docker needed); k=<name filter> narrows them
 test-integration: ## Integration tests only (need Docker); k=<name filter> narrows them
 	pytest tests/integration -q -rs $(PYTEST_SELECT)
 
-audit: ## Known vulnerabilities in installed packages
-	pip-audit --skip-editable
+audit: ## Known vulnerabilities in the locked packages (uv.lock)
+	@set -o pipefail; \
+	uv export --locked --all-groups --no-emit-project --format requirements-txt --quiet \
+		| pip-audit -r /dev/stdin --disable-pip --require-hashes --progress-spinner off
 
 check: format typecheck test ## Before a commit: format, type check and test
 

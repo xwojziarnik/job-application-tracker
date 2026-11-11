@@ -33,6 +33,7 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-19 | Storing CV versions                       | Accepted | Optional CV per application, PDF in self-hosted SeaweedFS through the S3 API |
 | D-20 | Offer sources                             | Accepted | Adds `rocketjobs` and `joobie` to the D-14 sources |
 | D-21 | Job offer endpoints and offer list       | Accepted | `/job-offers`, company summary in responses, `204` on delete; list filters, sort and `GET /tags` |
+| D-22 | Dependency lock file                      | Accepted | `uv.lock` managed by uv; every install uses it, `pip-audit` checks it |
 
 ---
 
@@ -911,6 +912,46 @@ the hidden assumption that every amount is in PLN.
   endpoint must have the company loaded.
 - The list needs indexes later if it gets slow (e.g. on `company_id`, `posted_on`); with
   hundreds of offers a plain scan is fine.
+
+---
+
+## D-22: Dependency lock file
+
+**Status:** Accepted (2026-11-11)
+
+**Context.** `pyproject.toml` declares only minimum versions (`>=`). Every install (local,
+CI, Docker) resolves them again and takes the newest releases, so two builds of the same
+commit can contain different packages, a build cannot be reproduced, and `pip-audit` in CI
+checks what CI happened to install, not what the image ships. Dev tools live in
+`[dependency-groups]` (PEP 735).
+
+**Options.**
+
+| Option | For | Against |
+|---|---|---|
+| uv (`uv.lock`) | Locks the app and the `dev` group in one file, for every platform; `uv sync --locked` fails when the lock is stale; hashes; supported by Dependabot | A second tool next to pip |
+| pip-tools (`requirements.txt`) | pip only | No `[dependency-groups]`: dev tools would be listed twice; one file per environment |
+| `pip lock` (`pylock.toml`) | Standard format (PEP 751), pip only | Experimental in pip 26, as is installing from it |
+
+**Decision.** uv with a committed `uv.lock`:
+- `pyproject.toml` stays the place where dependencies are declared (minimum versions);
+  `uv.lock` pins the exact versions with hashes. Both change together, in one commit.
+- Every install uses the lock and fails when it does not match `pyproject.toml`
+  (`--locked`): `make install` into the project's pyenv virtualenv, CI, and the Docker
+  image (without the `dev` group, in a build stage, so uv is not in the final image).
+- `pip-audit` checks the locked versions (exported with hashes from `uv.lock`), not the
+  installed environment, so the audit sees exactly what is shipped and installed.
+- The uv version is pinned in CI and in the Dockerfile; Dependabot updates `uv.lock`
+  (ecosystem `uv` instead of `pip`).
+
+**Rationale.** Of the three options only uv handles the dependency groups the project
+already uses without duplicating them, and it is stable, unlike `pip lock`. The lock makes
+builds reproducible and the audit meaningful; upgrades become explicit pull requests.
+
+**Consequences.**
+- Developers need uv installed; `make install` runs `uv sync`.
+- Adding or upgrading a package: change `pyproject.toml`, run `uv lock`, commit both files.
+- The `hatch` used by the release job stays a separately pinned tool.
 
 ---
 

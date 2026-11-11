@@ -17,7 +17,16 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- Dependency lock file `uv.lock` (D-22): exact versions with hashes for the app and the dev
+  tools; `make lock` updates it after a change in `pyproject.toml`.
+
 ### Changed
+
+- `make install`, CI and the Docker image install from `uv.lock` with uv and fail when it
+  does not match `pyproject.toml`.
+- The Docker image is built in two stages; the final image contains the virtualenv and the
+  migrations, without uv or the sources.
+- Dependabot updates `uv.lock` (ecosystem `uv` instead of `pip`) and the Docker images.
 
 ### Deprecated
 
@@ -26,6 +35,10 @@ the new version section, updates the links below and tags the commit.
 ### Fixed
 
 ### Security
+
+- `pip-audit` (`make audit` and CI) checks the locked versions instead of the installed
+  environment, so it audits exactly what is shipped; builds no longer pick up new,
+  unreviewed package releases.
 
 ## [0.5.0] - 2026-11-11
 
