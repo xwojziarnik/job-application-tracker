@@ -19,6 +19,10 @@ the new version section, updates the links below and tags the commit.
 
 ### Changed
 
+- The Docker image runs on Python 3.15 (`python:3.15-slim`, was 3.14), updated by
+  Dependabot; CI now tests on Python 3.15 too, the version that ships. Python 3.13 stays
+  the minimum supported version.
+
 ### Deprecated
 
 ### Removed

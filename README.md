@@ -6,7 +6,7 @@ REST API for tracking job applications: companies, job offers, application statu
 interviews and notes. Built as a production-style backend project with a focus on clean
 architecture, testing and security.
 
-**Stack:** Python 3.14 · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL 17 · Alembic ·
+**Stack:** Python 3.15 · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL 17 · Alembic ·
 Pydantic v2 · uv · pytest · Docker
 
 ## Features
@@ -67,8 +67,9 @@ docker compose -f docker-compose.yml up --build
 
 ## Local development
 
-Requires Python 3.13+ (3.14 recommended), [uv](https://docs.astral.sh/uv/) and Docker.
-Create and activate a virtualenv first (e.g. with pyenv); `make install` installs into it.
+Requires Python 3.13+ (3.15 recommended, as in CI and the Docker image),
+[uv](https://docs.astral.sh/uv/) and Docker. Create and activate a virtualenv first (e.g.
+with pyenv); `make install` installs into it.
 
 ```bash
 make install                   # locked app + dev tools (uv.lock) and the pre-commit hook
