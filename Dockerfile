@@ -1,5 +1,5 @@
 # Build stage: installs the locked dependencies (uv.lock, D-22) into /app/.venv.
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 /uv /bin/uv
 
@@ -21,7 +21,7 @@ COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
 # Runtime stage: the virtualenv and the migrations only; no uv, no sources.
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
