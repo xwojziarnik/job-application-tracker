@@ -24,7 +24,9 @@ target_metadata: MetaData = Base.metadata
 
 def get_url() -> str:
     # Lets callers (e.g. tests) override the URL; falls back to app settings.
-    return config.get_main_option("sqlalchemy.url") or get_settings().database_url
+    return (
+        config.get_main_option("sqlalchemy.url") or get_settings().database_url.get_secret_value()
+    )
 
 
 def number_new_revision(
