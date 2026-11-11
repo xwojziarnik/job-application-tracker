@@ -1,11 +1,18 @@
+"""Application settings, read from environment variables and the ``.env`` file."""
+
 from functools import lru_cache
 from typing import Literal, Self
 
-from pydantic import model_validator
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Settings of the application; each field is read from the variable of the same name.
+
+    Production refuses to start with the local default database URL or with debug enabled.
+    """
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "Job Application Tracker"
@@ -13,7 +20,9 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Local development default only; production must set DATABASE_URL explicitly.
-    database_url: str = "postgresql+asyncpg://tracker:tracker@localhost:5432/tracker"
+    database_url: SecretStr = SecretStr(
+        "postgresql+asyncpg://tracker:tracker@localhost:5432/tracker"
+    )
     database_echo: bool = False
 
     @model_validator(mode="after")

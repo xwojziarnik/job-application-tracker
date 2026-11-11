@@ -6,8 +6,8 @@ Tables and the relationships between them. Decisions referenced as `D-XX` are in
 | Table | Status |
 |---|---|
 | `companies` | Implemented (stage 2, step 1) |
-| `job_offers` | Implemented (stage 2, step 2: table only, no endpoints yet) |
-| `tags`, `job_offer_tags` | Implemented (stage 2, step 2: tables only, no endpoints yet) |
+| `job_offers` | Implemented (stage 2, step 2) |
+| `tags`, `job_offer_tags` | Implemented (stage 2, step 2) |
 | `applications` | Planned (stage 2, step 3) |
 | `cv_documents` (files in SeaweedFS) | Planned (stage 2, step 4, D-19) |
 

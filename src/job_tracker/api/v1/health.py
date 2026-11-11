@@ -1,3 +1,5 @@
+"""Health checks: liveness of the process and readiness of the database."""
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -10,6 +12,8 @@ router: APIRouter = APIRouter(prefix="/health", tags=["health"])
 
 
 class HealthRead(BaseModel):
+    """Response of the health checks: ``{"status": "ok"}``."""
+
     status: str
 
 

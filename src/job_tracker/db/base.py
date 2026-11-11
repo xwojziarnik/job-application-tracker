@@ -23,6 +23,8 @@ NAMING_CONVENTION: dict[str, str] = {
 
 
 class Base(DeclarativeBase):
+    """Base class of all models; its metadata names constraints by ``NAMING_CONVENTION``."""
+
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 

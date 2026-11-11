@@ -11,6 +11,8 @@ DEFAULT_LIMIT: int = 20
 
 
 class PaginationParams(BaseModel):
+    """``limit`` and ``offset`` query parameters of every list endpoint (D-08)."""
+
     limit: int = Field(
         default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT, description="Number of items to return"
     )
@@ -22,6 +24,8 @@ class PaginationParams(BaseModel):
 
 
 class Page[T](BaseModel):
+    """One page of a list: the items and the number of all matching items."""
+
     items: list[T] = Field(..., description="List of items on the current page")
     total: int = Field(..., ge=0, description="Total number of items available")
     limit: int = Field(..., ge=1, le=MAX_LIMIT, description="Number of items per page")

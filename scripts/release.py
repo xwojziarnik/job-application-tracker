@@ -31,11 +31,15 @@ VERSION: re.Pattern[str] = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 class ChangelogError(Exception):
+    """CHANGELOG.md does not have the expected structure, or the release is not possible."""
+
     pass
 
 
 @dataclass
 class Section:
+    """A ``## [name]`` section of the changelog: its heading line and the lines below it."""
+
     name: str
     heading: str
     body: list[str] = field(default_factory=list)
@@ -43,11 +47,14 @@ class Section:
 
 @dataclass
 class Changelog:
+    """CHANGELOG.md split into the text before the first section and the sections."""
+
     preamble: list[str]
     sections: list[Section]
 
     @property
     def unreleased(self) -> Section:
+        """The ``[Unreleased]`` section; ``ChangelogError`` if there is none."""
         for section in self.sections:
             if section.name == UNRELEASED:
                 return section
@@ -69,6 +76,11 @@ def detect_bump(commit_subjects: list[str]) -> str | None:
 
 
 def parse_changelog(text: str) -> Changelog:
+    """Split ``text`` into sections, dropping the link definitions at the end.
+
+    Raises ``ChangelogError`` for an invalid version heading or ``[Unreleased]`` entries
+    outside the allowed subsections.
+    """
     lines = text.splitlines()
     # Link definitions at the end are always regenerated, so drop them here.
     while lines and (not lines[-1].strip() or LINK_DEFINITION.match(lines[-1])):
@@ -113,6 +125,7 @@ def parse_entries(section: Section) -> dict[str, list[str]]:
 
 
 def render_subsections(entries: dict[str, list[str]]) -> list[str]:
+    """Render the non-empty subsections in the order of ``CHANGE_TYPES``."""
     lines: list[str] = []
     for name in CHANGE_TYPES:
         if name in entries:
@@ -121,6 +134,7 @@ def render_subsections(entries: dict[str, list[str]]) -> list[str]:
 
 
 def empty_unreleased_template() -> list[str]:
+    """The lines of a fresh ``[Unreleased]`` section: every subsection, all empty."""
     lines: list[str] = []
     for name in CHANGE_TYPES:
         lines += [f"### {name}", ""]
@@ -128,6 +142,7 @@ def empty_unreleased_template() -> list[str]:
 
 
 def render_links(versions: list[str], repo_url: str) -> list[str]:
+    """Comparison links at the end of the changelog, newest version first."""
     unreleased_target = (
         f"{repo_url}/compare/v{versions[0]}...HEAD" if versions else f"{repo_url}/commits/HEAD"
     )
@@ -141,6 +156,11 @@ def render_links(versions: list[str], repo_url: str) -> list[str]:
 
 
 def release(text: str, version: str, date: str, repo_url: str) -> str:
+    """Return ``text`` with ``[Unreleased]`` turned into the section of ``version``.
+
+    Raises ``ChangelogError`` for an invalid or already released version, or when
+    ``[Unreleased]`` is empty.
+    """
     if not VERSION.match(version):
         raise ChangelogError(f"Invalid version: {version}")
 
@@ -173,6 +193,7 @@ def release(text: str, version: str, date: str, repo_url: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run a command (``bump``, ``check`` or ``release``); return the exit code."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
 

@@ -28,7 +28,7 @@ the new version section, updates the links below and tags the commit.
 - Normalisation of offer URLs, so one offer is stored under one spelling: scheme and host
   in lower case, no credentials, default port, fragment, trailing slashes, tracking
   parameters (`utm_*`, `gclid`, `fbclid`, LinkedIn's `refId`, `trackingId`, `trk`) or
-  empty parameters. It will be applied when offers are saved through the API.
+  empty parameters. It is applied whenever an offer is created or its URL changed.
 - Normalisation of tag names, so one tag has one spelling: trimmed, lower-case, whitespace
   replaced with `-`; only `a-z`, `0-9`, `.`, `+`, `#` and `-`, at most 50 characters (so
   `C++`, `C#`, `.NET` and `Node.js` work), with at least one letter or digit. Names with
@@ -61,6 +61,13 @@ the new version section, updates the links below and tags the commit.
   - `DELETE /job-offers/{job_offer_id}` deletes an offer (`204`); its tags stay.
 
   Every offer response carries a summary of its company (`id`, `name`, `is_active`).
+- Offer list `GET /api/v1/job-offers` with pagination and filters: `company_id`,
+  `work_mode` and `source` (repeatable, any of), `seniority` (`mid` also matches
+  `junior_mid` and `mid_senior`), `tag` (repeatable, all of), `min_salary` with `currency`
+  (offers whose maximum reaches it), `search` in the title and `include_inactive` (offers
+  of inactive companies are hidden by default). `sort` is `newest` (default), `salary` or
+  `title`.
+- Tag list `GET /api/v1/tags`: tag names in alphabetical order, with `search` and pagination.
 
 ### Changed
 
@@ -74,6 +81,9 @@ the new version section, updates the links below and tags the commit.
 ### Fixed
 
 ### Security
+
+- The database URL, which contains the password, is no longer shown when the settings
+  are printed or logged.
 
 ## [0.4.0] - 2026-11-02
 

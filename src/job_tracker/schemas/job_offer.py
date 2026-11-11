@@ -6,6 +6,7 @@ update schemas. URLs and tags are stored normalised (``normalise_offer_url``,
 """
 
 from datetime import date, datetime
+from enum import StrEnum
 from typing import Annotated, Self
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -68,6 +69,11 @@ OfferUrl = Annotated[
 ]
 
 OfferLocation = Annotated[
+    Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None, BLANK_TO_NONE
+]
+
+# A fragment of the title to search for; blank means no search.
+OfferSearch = Annotated[
     Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None, BLANK_TO_NONE
 ]
 
@@ -215,3 +221,40 @@ class JobOfferRead(BaseModel):
                 [element.name if hasattr(element, "name") else element for element in value]
             )
         return value
+
+
+class JobOfferSort(StrEnum):
+    """Sort orders of the offer list (D-21); every order ends with ``id``, so pages are stable."""
+
+    NEWEST = "newest"
+    SALARY = "salary"
+    TITLE = "title"
+
+
+class JobOfferFilters(BaseModel):
+    """Query parameters of ``GET /job-offers`` (D-21), all optional and combined with AND.
+
+    Repeatable ``work_mode`` and ``source`` match any of the given values; repeatable
+    ``tag`` requires all of them (names normalised like stored tags). ``seniority`` also
+    matches the combined values containing the level. ``min_salary`` and ``currency`` are
+    given together. Offers of inactive companies are left out unless ``include_inactive``.
+    """
+
+    company_id: UUID | None = None
+    work_mode: list[WorkMode] = Field(default_factory=list)
+    seniority: Seniority | None = None
+    tag: TagList = Field(default_factory=list)
+    min_salary: SalaryAmount | None = None
+    currency: Currency | None = None
+    source: list[OfferSource] = Field(default_factory=list)
+    search: OfferSearch = None
+    include_inactive: bool = False
+    sort: JobOfferSort = JobOfferSort.NEWEST
+
+    @model_validator(mode="after")
+    def check_salary_filter(self) -> Self:
+        """Require ``min_salary`` and ``currency`` together: an amount means nothing
+        without its currency, and a currency alone filters nothing."""
+        if (self.min_salary is None) != (self.currency is None):
+            raise ValueError("min_salary and currency must be given together")
+        return self

@@ -1,3 +1,5 @@
+"""The ``companies`` table (decisions: "Company")."""
+
 from sqlalchemy import String, true
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.schema import Index
