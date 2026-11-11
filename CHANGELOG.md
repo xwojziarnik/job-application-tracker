@@ -17,6 +17,20 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.1] - 2026-11-11
+
+### Added
+
 - Dependency lock file `uv.lock` (D-22): exact versions with hashes for the app and the dev
   tools; `make lock` updates it after a change in `pyproject.toml`.
 
@@ -27,12 +41,6 @@ the new version section, updates the links below and tags the commit.
 - The Docker image is built in two stages; the final image contains the virtualenv and the
   migrations, without uv or the sources.
 - Dependabot updates `uv.lock` (ecosystem `uv` instead of `pip`) and the Docker images.
-
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ### Security
 
@@ -214,7 +222,8 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.2.0...v0.3.0
