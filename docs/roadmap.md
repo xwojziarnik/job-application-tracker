@@ -14,7 +14,9 @@ parameters, return types), without changing behaviour, and lists them in the rev
 Every new step is described up front in detail: files, classes and their names, the order
 of work, the library APIs to use, the pitfalls and how each test maps to the code, so the
 implementation does not need repeated questions. Implementation guidelines are given as
-pseudocode, not as ready-to-paste code.
+pseudocode, not as ready-to-paste code. Suggested commands use the `Makefile` targets
+(`make test`, `make check`, `make audit`, ...) instead of calling the tools (`pytest`,
+`pip-audit`, ...) directly.
 
 ## Status
 

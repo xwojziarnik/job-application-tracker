@@ -166,6 +166,15 @@ make ci      # what CI runs, without changing files: lint, type check, tests, pi
 Single steps: `make format`, `make lint`, `make typecheck`, `make test`, `make test-unit`,
 `make test-integration`, `make audit`.
 
+Run only some tests with `t` (a file, directory or single test) and `k` (a filter on test
+names):
+
+```bash
+make test t=tests/integration/test_job_offer_service.py
+make test t=tests/unit/test_tags.py k="rejected and not blank"
+make test-unit k=salary
+```
+
 Integration tests start a throwaway PostgreSQL with
 [testcontainers](https://testcontainers.com/). Locally they are skipped when Docker is not
 running; in CI a missing Docker fails the build.

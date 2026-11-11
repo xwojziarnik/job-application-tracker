@@ -47,6 +47,9 @@ the new version section, updates the links below and tags the commit.
 
 ### Changed
 
+- `make test`, `make test-unit` and `make test-integration` accept `t=` (a test file,
+  directory or single test) and `k=` (a filter on test names) to run only some tests.
+
 ### Deprecated
 
 ### Removed
