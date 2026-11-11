@@ -74,7 +74,7 @@ def _validation_error(*details: dict[str, str]) -> dict[str, object]:
     }
 
 
-VALID_ITEM = {"name": "Keyboard", "price": 100, "tags": [{"name": "hardware"}]}
+VALID_ITEM: dict[str, object] = {"name": "Keyboard", "price": 100, "tags": [{"name": "hardware"}]}
 
 
 async def test_missing_body_field() -> None:

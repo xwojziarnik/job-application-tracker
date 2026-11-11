@@ -25,12 +25,13 @@ old text: mark it `Superseded by D-XX` and add a new entry, so the history stays
 | D-11 | Dates, times and time zones               | Accepted | UTC `TIMESTAMPTZ` for events, `DATE` for calendar days |
 | D-12 | Test database isolation                   | Accepted | Separate database per test, cloned from a migrated template |
 | D-13 | Error response format                     | Accepted (details refined by D-17) | One format for all errors, incl. validation and `HTTPException` |
-| D-14 | Allowed values of enumerations            | Accepted (seniority superseded by D-15) | Sources, seniority range, work mode, currencies (see entry) |
+| D-14 | Allowed values of enumerations            | Accepted (seniority superseded by D-15, offer sources by D-20) | Sources, seniority range, work mode, currencies (see entry) |
 | D-15 | Seniority as one combined value           | Accepted | Single field: `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` |
 | D-16 | Application statuses                      | Accepted | 8 active (incl. `on_hold`) and 4 final statuses |
 | D-17 | Error format details                      | Accepted | Codes derived from HTTP status, `internal_server_error`, field paths without source |
 | D-18 | Migration numbering                       | Accepted | Sequential revision IDs `001`, `002`, ...; files `<number>_<slug>.py` |
 | D-19 | Storing CV versions                       | Accepted | Optional CV per application, PDF in self-hosted SeaweedFS through the S3 API |
+| D-20 | Offer sources                             | Accepted | Adds `rocketjobs` and `joobie` to the D-14 sources |
 
 ---
 
@@ -556,7 +557,8 @@ format also decides what is exposed: no stack traces, SQL or internal exception 
 
 ## D-14: Allowed values of enumerations
 
-**Status:** Accepted (2026-10-26); the seniority part is superseded by D-15
+**Status:** Accepted (2026-10-26); the seniority part is superseded by D-15, the offer
+sources by D-20
 
 **Context.** D-02 decided how enumerations are stored; this entry fixes their values.
 Values are stored as lower-case strings (D-02), so they are listed in that form.
@@ -808,6 +810,39 @@ version is often sent to several companies.
 
 ---
 
+## D-20: Offer sources
+
+**Status:** Accepted (2026-11-04). Supersedes the offer sources of D-14.
+
+**Context.** D-14 closed the list of offer sources to five job boards plus
+`company_website`. While implementing the job offer model, two more job boards used to
+look for offers were added: Rocket Jobs and Joobie.
+
+**Decision.** The offer source is one of:
+
+| Value | Job board |
+|---|---|
+| `linkedin` | LinkedIn |
+| `pracuj` | Pracuj.pl |
+| `justjoinit` | Just Join IT |
+| `bulldogjob` | Bulldogjob |
+| `nofluffjobs` | No Fluff Jobs |
+| `rocketjobs` | Rocket Jobs |
+| `joobie` | Joobie |
+| `company_website` | A company's careers page |
+
+Values are lower-case and contain no dots, so they are the same in SQL, the API and the
+code (D-02).
+
+**Rationale.** The list covers every job board actually used; a closed list keeps the
+"effectiveness of job boards" statistics (stage 5) clean.
+
+**Consequences.**
+- The `CHECK` constraint of `job_offers.source` lists these eight values. Adding another
+  job board later is a new migration and a new decision entry.
+
+---
+
 ## Deferred to each model
 
 Decided while designing each model in its own slice (stage 2, steps 1–3), and recorded here
@@ -842,3 +877,75 @@ when made:
   deterministic for pagination, D-08) and hides inactive companies unless
   `include_inactive` is set (D-04). `search` matches a fragment of the name regardless of
   case; `%` and `_` in the search text are plain characters.
+
+### Job offer (2026-11-02)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `company_id` | UUID | yes | Foreign key with `ON DELETE RESTRICT` (D-04); the company must be active (D-10); cannot be changed after creation |
+| `title` | text, 1–200 characters | yes | Trimmed; must not be empty after trimming |
+| `url` | https URL, up to 2048 characters | yes | Normalised before saving (lower-case scheme and host, tracking parameters such as `utm_*` removed, no trailing slash) and unique (D-05) |
+| `source` | enumeration | yes | `linkedin`, `pracuj`, `justjoinit`, `bulldogjob`, `nofluffjobs`, `rocketjobs`, `joobie`, `company_website` (D-20) |
+| `seniority` | enumeration | yes | `junior`, `junior_mid`, `mid`, `mid_senior`, `senior`, `senior_lead`, `lead` (D-15) |
+| `work_mode` | enumeration | yes | `remote`, `hybrid`, `office` (D-14) |
+| `location` | text, up to 200 characters | no | Where the job is done; the company's headquarters is `Company.location` |
+| `salary_min`, `salary_max` | integer | no | B2B net per month in whole currency units (D-03); both or neither; both positive; `salary_min <= salary_max` |
+| `currency` | enumeration | with the salary | `PLN`, `EUR`, `USD` (D-14); required when the salary is given, empty otherwise |
+| `posted_on` | date | no | `DATE` (D-11); not in the future |
+| `description` | text, up to 20 000 characters | no | The text of the job advert, kept in case the advert disappears from the job board |
+| `notes` | text, up to 2000 characters | no | The owner's own notes |
+| `tags` | list of tag names | no | Free tags, normalised (D-09); at most 20 per offer; duplicates after normalisation are merged |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Salary is all or nothing:** `salary_min`, `salary_max` and `currency` are either all
+  set or all empty, so an amount never exists without its currency and every stored range
+  is complete and comparable. An hourly rate is converted when the offer is entered
+  (160 hours per month, D-03). Enforced by the schema and by a `CHECK` constraint.
+- **Blank text in optional fields** is stored as `null`, as for companies. All text
+  fields are trimmed.
+- **URL normalisation** (`normalise_offer_url`, refines D-05; one function used by the
+  schema and the service): surrounding whitespace is trimmed; scheme and host are
+  lower-cased, the path keeps its case; the default port `:443`, the fragment (`#...`) and
+  trailing slashes are removed; tracking parameters are removed: every `utm_*` (in any
+  case), `gclid`, `fbclid` and LinkedIn's `refId`, `trackingId` and `trk`. Other query
+  parameters are kept in their order. Normalising an already normalised URL changes
+  nothing. The URL is validated (`https`, with a host) before it is normalised.
+- **Create** (`POST`) accepts every field above except `id` and the timestamps. A company
+  that does not exist returns `404`; an inactive one returns `409 company_inactive`
+  (D-10); a URL that is already stored (after normalisation) returns `409`.
+- **Update** (`PATCH`): an omitted field is not changed. `null` clears an optional field;
+  `null` for `title`, `url`, `source`, `seniority` or `work_mode` is rejected with `422`.
+  `company_id` is not accepted (`422`): an offer added to the wrong company is deleted and
+  added again. The salary rule applies to the offer after the update, so a `PATCH` that
+  sends only `salary_max` must keep a complete, valid range. `tags` replaces the whole
+  list; `[]` removes all tags.
+- **Delete** removes the offer and its applications (`ON DELETE CASCADE`, D-04).
+- **Read and list**: offers of an inactive company are hidden from lists by default
+  (D-04). The response shape, filters and sort order are decided with the endpoints.
+
+### Tag (2026-11-05)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `name` | text, 1–50 characters | yes | Normalised (D-09) and unique (`uq_tags_name`) |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **Name normalisation** (`normalise_tag_name`, refines D-09; one function used before
+  every lookup and insert): surrounding whitespace is trimmed, the name is lower-cased and
+  every run of whitespace (spaces, tabs, new lines) becomes one `-`. The result may contain
+  only `a–z`, `0–9`, `.`, `+`, `#` and `-`, must contain at least one letter or digit
+  (`---` or `.` is a typo, not a technology; `c#` and `.net` still pass), must not be empty
+  and has at most 50 characters; otherwise the function raises `ValueError`, which a schema
+  reports as `422`.
+  Underscores, slashes and non-ASCII letters are rejected, not replaced.
+- **Database check** `ck_tags_name_format`: the database itself refuses a name outside the
+  allowed characters or without a letter or digit (defence in depth, also for rows
+  written with plain SQL).
+- **Links** (`job_offer_tags`): a composite primary key `(job_offer_id, tag_id)`, so an
+  offer has a tag at most once. Deleting an offer deletes its links (`ON DELETE CASCADE`)
+  and keeps the tags; a tag used by an offer cannot be deleted (`ON DELETE RESTRICT`).
+  Tags are not deleted through the API.
+- **Tags have no endpoint of their own** except `GET /tags`; they are created with the
+  offers that use them ("get or create" with `INSERT ... ON CONFLICT DO NOTHING`, D-09).

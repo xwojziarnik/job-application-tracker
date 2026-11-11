@@ -16,16 +16,18 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-BUMP_ORDER = ("fix", "minor", "major")
-BUMP_MARKER = re.compile(r"\[(major|minor|fix)\]\s*$")
+BUMP_ORDER: tuple[str, ...] = ("fix", "minor", "major")
+BUMP_MARKER: re.Pattern[str] = re.compile(r"\[(major|minor|fix)\]\s*$")
 
-CHANGE_TYPES = ("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")
-UNRELEASED = "Unreleased"
+CHANGE_TYPES: tuple[str, ...] = ("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")
+UNRELEASED: str = "Unreleased"
 
-SECTION_HEADING = re.compile(r"^## \[(?P<name>[^\]]+)\](?: - \d{4}-\d{2}-\d{2})?\s*$")
-SUBSECTION_HEADING = re.compile(r"^### (?P<name>.+?)\s*$")
-LINK_DEFINITION = re.compile(r"^\[[^\]]+\]: \S+\s*$")
-VERSION = re.compile(r"^\d+\.\d+\.\d+$")
+SECTION_HEADING: re.Pattern[str] = re.compile(
+    r"^## \[(?P<name>[^\]]+)\](?: - \d{4}-\d{2}-\d{2})?\s*$"
+)
+SUBSECTION_HEADING: re.Pattern[str] = re.compile(r"^### (?P<name>.+?)\s*$")
+LINK_DEFINITION: re.Pattern[str] = re.compile(r"^\[[^\]]+\]: \S+\s*$")
+VERSION: re.Pattern[str] = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 class ChangelogError(Exception):

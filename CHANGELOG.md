@@ -17,7 +17,44 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- `job_offers` table: company, title, URL, source, seniority, work mode, location,
+  salary range with currency, posting date, description and notes. The database itself
+  rejects values outside the enumerations, an incomplete or invalid salary range (all of
+  `salary_min`, `salary_max` and `currency`, or none; positive; minimum not above the
+  maximum), a URL stored twice and deleting a company that has offers.
+- Enumerations of offer sources (LinkedIn, Pracuj.pl, Just Join IT, Bulldogjob, No Fluff
+  Jobs, Rocket Jobs, Joobie, company website), seniority levels including combined ones
+  such as `mid_senior`, work modes and currencies.
+- Normalisation of offer URLs, so one offer is stored under one spelling: scheme and host
+  in lower case, no credentials, default port, fragment, trailing slashes, tracking
+  parameters (`utm_*`, `gclid`, `fbclid`, LinkedIn's `refId`, `trackingId`, `trk`) or
+  empty parameters. It will be applied when offers are saved through the API.
+- Normalisation of tag names, so one tag has one spelling: trimmed, lower-case, whitespace
+  replaced with `-`; only `a-z`, `0-9`, `.`, `+`, `#` and `-`, at most 50 characters (so
+  `C++`, `C#`, `.NET` and `Node.js` work), with at least one letter or digit. Names with
+  other characters or only punctuation are rejected.
+- `tags` and `job_offer_tags` tables: an offer can have many tags and a tag many offers,
+  each tag at most once per offer. The database rejects tag names that are not normalised,
+  keeps tags when an offer is deleted and refuses to delete a tag that is still in use.
+- Job offer schemas for creating, updating and reading an offer: text is trimmed, blank
+  optional text is stored as `null`, the URL must be `https` and is normalised, tags are
+  normalised with duplicates merged (at most 20), the salary is all or nothing with the
+  minimum not above the maximum, and the posting date cannot be in the future (in the
+  `Europe/Warsaw` calendar). An update changes only the fields sent; the company of an
+  offer cannot be changed.
+- Job offer repository: offers are read with their company and tags, and tags are created
+  on the fly without failing when another request stores the same name at the same time.
+- Job offer use cases: create, read, update and delete. An unknown company or offer
+  returns `404`, adding an offer to an inactive company `409 company_inactive`, and a URL
+  already stored (in any spelling) `409 job_offer_already_exists`. An update that would
+  leave the salary incomplete or with the minimum above the maximum returns
+  `422 invalid_salary`. A rejected change stores nothing, not even new tags.
+- Tags of an offer are always returned in alphabetical order.
+
 ### Changed
+
+- `make test`, `make test-unit` and `make test-integration` accept `t=` (a test file,
+  directory or single test) and `k=` (a filter on test names) to run only some tests.
 
 ### Deprecated
 

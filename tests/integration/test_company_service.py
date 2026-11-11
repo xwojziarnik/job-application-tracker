@@ -24,9 +24,9 @@ from job_tracker.models import Company
 from job_tracker.schemas.company import CompanyCreate, CompanyUpdate
 from job_tracker.services.company import CompanyService
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
-LONG_AGO = datetime(2026, 1, 1, tzinfo=UTC)
+LONG_AGO: datetime = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 @pytest.fixture

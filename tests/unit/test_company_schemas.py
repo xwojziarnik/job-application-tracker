@@ -18,7 +18,11 @@ from pydantic import ValidationError
 from job_tracker.models import Company
 from job_tracker.schemas.company import CompanyCreate, CompanyRead, CompanyUpdate
 
-OPTIONAL_TEXT_LIMITS = [("location", 200), ("industry", 100), ("notes", 2000)]
+OPTIONAL_TEXT_LIMITS: list[tuple[str, int]] = [
+    ("location", 200),
+    ("industry", 100),
+    ("notes", 2000),
+]
 
 
 def _invalid_fields(schema: type[CompanyCreate | CompanyUpdate], data: dict[str, Any]) -> set[str]:

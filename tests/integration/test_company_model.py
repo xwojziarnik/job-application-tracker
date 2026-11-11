@@ -18,10 +18,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from job_tracker.db.errors import violated_constraint
 from job_tracker.models import Base, Company
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
-UNIQUE_NAME_INDEX = "uq_companies_lower_name"
-STRING_TOO_LONG = "22001"  # PostgreSQL error code string_data_right_truncation
+UNIQUE_NAME_INDEX: str = "uq_companies_lower_name"
+STRING_TOO_LONG: str = "22001"  # PostgreSQL error code string_data_right_truncation
 
 
 @pytest.fixture

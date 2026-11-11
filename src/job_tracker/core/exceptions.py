@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from pydantic_core import ErrorDetails
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ErrorDetail(BaseModel):
@@ -92,9 +92,28 @@ class CompanyInactiveError(ConflictError):
 class NotFoundError(DomainError):
     """The requested resource does not exist (404)."""
 
-    status_code = status.HTTP_404_NOT_FOUND
-    code = "not_found"
-    default_message = "Resource not found"
+    status_code: int = status.HTTP_404_NOT_FOUND
+    code: str = "not_found"
+    default_message: str = "Resource not found"
+
+
+class JobOfferAlreadyExistsError(ConflictError):
+    """A job offer with the same normalised URL already exists (D-05)."""
+
+    code: str = "job_offer_already_exists"
+    default_message: str = "A job offer with this URL already exists"
+
+
+class InvalidSalaryError(DomainError):
+    """The salary would be incomplete or out of order after a change (422, D-03).
+
+    Raised by the service, which sees the stored values; the request schemas report
+    their own salary errors as ``validation_error``.
+    """
+
+    status_code: int = status.HTTP_422_UNPROCESSABLE_CONTENT
+    code: str = "invalid_salary"
+    default_message: str = "The salary must be complete (minimum, maximum and currency) or empty"
 
 
 def error_response(

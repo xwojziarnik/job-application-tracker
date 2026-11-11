@@ -14,7 +14,9 @@ from pydantic import BaseModel
 
 from job_tracker.core.exceptions import register_exception_handlers
 
-INTERNAL_ERROR = {"error": {"code": "internal_server_error", "message": "Internal server error"}}
+INTERNAL_ERROR: dict[str, dict[str, str]] = {
+    "error": {"code": "internal_server_error", "message": "Internal server error"}
+}
 
 
 class Item(BaseModel):

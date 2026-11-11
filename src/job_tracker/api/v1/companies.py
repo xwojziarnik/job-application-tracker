@@ -20,7 +20,7 @@ from job_tracker.core.exceptions import ErrorResponse
 from job_tracker.schemas.company import CompanyCreate, CompanyRead, CompanyUpdate
 from job_tracker.schemas.pagination import Page
 
-router = APIRouter(
+router: APIRouter = APIRouter(
     prefix="/companies",
     tags=["companies"],
     responses={

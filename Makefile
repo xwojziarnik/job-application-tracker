@@ -2,6 +2,13 @@
 # Commands run in the active Python environment (the pyenv virtualenv of this project).
 
 .DEFAULT_GOAL := help
+
+# Optional test selection for the test targets:
+#   t = a test file, directory or single test, e.g. t=tests/unit/test_tags.py
+#   k = a pytest -k expression matching test names, e.g. k="salary and not update"
+t ?=
+k ?=
+PYTEST_SELECT = $(if $(k),-k "$(k)")
 .PHONY: help install format lint typecheck test test-unit test-integration audit check ci \
 	db migrate migration downgrade run
 
@@ -21,14 +28,14 @@ lint: ## Check formatting and lint rules without changing files (as in CI)
 typecheck: ## Strict type checking
 	mypy
 
-test: ## All tests (integration tests need Docker; skipped tests are listed)
-	pytest -q -rs
+test: ## All tests, or a selection: make test t=<file or dir> k=<name filter>
+	pytest -q -rs $(t) $(PYTEST_SELECT)
 
-test-unit: ## Unit tests only (no Docker needed)
-	pytest tests/unit -q
+test-unit: ## Unit tests only (no Docker needed); k=<name filter> narrows them
+	pytest tests/unit -q $(PYTEST_SELECT)
 
-test-integration: ## Integration tests only (need Docker)
-	pytest tests/integration -q -rs
+test-integration: ## Integration tests only (need Docker); k=<name filter> narrows them
+	pytest tests/integration -q -rs $(PYTEST_SELECT)
 
 audit: ## Known vulnerabilities in installed packages
 	pip-audit --skip-editable

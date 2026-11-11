@@ -2,22 +2,24 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
+from alembic.config import Config
 from alembic.operations.ops import MigrationScript
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
+from sqlalchemy import MetaData
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from job_tracker.core.config import get_settings
 from job_tracker.models import Base
 
-config = context.config
+config: Config = context.config
 if config.config_file_name is not None:
     # Keep loggers that already exist: when migrations run inside the application's
     # process (e.g. the test fixtures), the default would silence the app's loggers.
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-target_metadata = Base.metadata
+target_metadata: MetaData = Base.metadata
 
 
 def get_url() -> str:

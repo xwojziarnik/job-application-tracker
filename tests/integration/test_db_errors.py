@@ -20,7 +20,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from job_tracker.db.base import NAMING_CONVENTION, UUIDPrimaryKeyMixin
 from job_tracker.db.errors import violated_constraint
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
 
 class ScratchBase(DeclarativeBase):

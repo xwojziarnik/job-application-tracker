@@ -9,6 +9,14 @@ Documentation is Claude's job: during every review Claude writes missing docstri
 fixes inaccurate ones (including the response descriptions shown in Swagger), keeps the
 `[Unreleased]` section of `CHANGELOG.md`, `README.md` and the files in `docs/` (roadmap
 progress, decisions) up to date with the reviewed changes, and lists all of it in the review.
+During reviews Claude also adds missing type annotations (module constants, variables,
+parameters, return types), without changing behaviour, and lists them in the review.
+Every new step is described up front in detail: files, classes and their names, the order
+of work, the library APIs to use, the pitfalls and how each test maps to the code, so the
+implementation does not need repeated questions. Implementation guidelines are given as
+pseudocode, not as ready-to-paste code. Suggested commands use the `Makefile` targets
+(`make test`, `make check`, `make audit`, ...) instead of calling the tools (`pytest`,
+`pip-audit`, ...) directly.
 
 ## Status
 
@@ -90,17 +98,40 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 - [x] Tests: happy paths, 404, 409, 422, 405 for delete, pagination limit, OpenAPI paths
   (`tests/integration/test_company_api.py`, written first, TDD).
 - [x] CHANGELOG, README (endpoint table, error examples), review.
-- [ ] Merge the pull request with `[minor]` (v0.4.0).
+- [x] Merge the pull request with `[minor]` (released as v0.4.0).
 
 ### Step 2: JobOffer + Tag
 
-- [ ] Decide required/optional fields and PATCH semantics.
-- [ ] Model: company FK `RESTRICT` (D-04), source (D-14), seniority (D-15), work mode,
-  salary `int` B2B net per month + currency, optional (D-03), `CHECK salary_min <= salary_max`.
-- [ ] Normalised, unique offer URL (D-05).
-- [ ] Tags: many-to-many, free and normalised (D-09), `INSERT ... ON CONFLICT DO NOTHING`.
-- [ ] Offers of an inactive company hidden by default; creating an offer for one → `409` (D-10).
-- [ ] Async relationships loaded explicitly (`selectinload`; consider `lazy="raise"`).
+- [x] Decide required/optional fields and PATCH semantics (see "Deferred to each
+  model" → "Job offer" in `decisions.md`).
+- [x] Model and migration `002`: company FK `RESTRICT` (D-04), source (D-20), seniority
+  (D-15), work mode, salary `int` B2B net per month + currency, all or nothing (D-03,
+  `ck_job_offers_salary_range`), enumerations as `VARCHAR` + `CHECK` storing values (D-02),
+  unique `url`. Tests written first (`test_enums.py`, `test_job_offer_model.py`).
+- [x] Normalised, unique offer URL (D-05): `normalise_offer_url` in `core/urls.py`
+  (`tests/unit/test_urls.py`, written first); applied in the schema and the service
+  together with the endpoints.
+- [x] Tags, part 1: `normalise_tag_name` in `core/tags.py`; `tags` (unique name,
+  `ck_tags_name_format`) and `job_offer_tags` (composite primary key, `CASCADE` from offers,
+  `RESTRICT` to tags), migration `003`. Tests written first (`test_tags.py`,
+  `test_tag_model.py`).
+- [x] Tags, part 2: "get or create" (part of the job offer repository below).
+- [x] Job offer service (`services/job_offer.py`; `test_job_offer_service.py`, written
+  first): create (unknown company `404`, inactive company `409`, D-10), read, update
+  (salary checked after merging with the stored values, `422 invalid_salary`), delete;
+  duplicate URL `409 job_offer_already_exists`; rejected changes roll back new tags. The
+  salary rule is shared in `core/salary.py`.
+- [ ] Offers of an inactive company hidden from lists by default (with the list endpoint).
+- [x] Relationships `JobOffer.company` and `JobOffer.tags` with `lazy="raise"`, loaded
+  explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
+  deleting offers (`test_job_offer_relationships.py`, written first).
+- [x] Job offer schemas: create, update (PATCH), read, with salary, URL and tag rules
+  (`schemas/job_offer.py`, shared helpers in `utils.py`; `test_job_offer_schemas.py`,
+  written first).
+- [x] Job offer repository: add, get with company and tags, update, delete, "get or create"
+  tags with `INSERT ... ON CONFLICT DO NOTHING` (D-09) (`repositories/job_offer.py`;
+  `test_job_offer_repository.py`, written first). The list with filters comes with the
+  endpoints.
 - [ ] Endpoints: offers CRUD with filters (company, work mode, seniority incl. combined
   values, tag, salary), `GET /tags`. Deleting an offer cascades to its applications (D-04).
 - [ ] Tests.

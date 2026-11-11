@@ -18,7 +18,7 @@ class ItemRead(BaseModel):
     name: str
 
 
-ITEMS = [ItemRead(name=f"item-{n}") for n in range(5)]
+ITEMS: list[ItemRead] = [ItemRead(name=f"item-{n}") for n in range(5)]
 
 
 def _paginated_app() -> FastAPI:

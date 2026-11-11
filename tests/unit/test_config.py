@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from job_tracker.core.config import Settings
 
-PRODUCTION_DB_URL = "postgresql+asyncpg://app:secret@db.internal:5432/tracker"
+PRODUCTION_DB_URL: str = "postgresql+asyncpg://app:secret@db.internal:5432/tracker"
 
 
 @pytest.fixture(autouse=True)

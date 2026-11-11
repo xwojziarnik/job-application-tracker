@@ -6,7 +6,7 @@ from alembic import command
 from alembic.config import Config
 from httpx import AsyncClient
 
-pytestmark = pytest.mark.integration
+pytestmark: pytest.MarkDecorator = pytest.mark.integration
 
 
 async def test_readiness_returns_ok_when_database_is_up(db_client: AsyncClient) -> None:
