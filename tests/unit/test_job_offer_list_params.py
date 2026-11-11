@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
+from job_tracker.core.tags import MAX_TAGS_PER_OFFER
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
 from job_tracker.schemas.job_offer import JobOfferFilters, JobOfferSort
 
@@ -140,3 +141,34 @@ def test_search_is_trimmed_and_blank_search_is_no_search() -> None:
 @pytest.mark.parametrize("sort", ["newest", "salary", "title"])
 def test_sort_accepts_the_decided_values(sort: str) -> None:
     assert _filters(sort=sort).sort == sort
+
+
+# Repeatable parameters are capped, so a request cannot send thousands of values: enum
+# filters at the number of values (each given once), tags at MAX_TAGS_PER_OFFER.
+@pytest.mark.parametrize(
+    ("field", "values"),
+    [
+        ("work_mode", [mode.value for mode in WorkMode]),
+        ("source", [source.value for source in OfferSource]),
+        ("tag", [f"tag-{n}" for n in range(MAX_TAGS_PER_OFFER)]),
+    ],
+    ids=["work-mode", "source", "tag"],
+)
+def test_repeatable_parameter_accepts_up_to_its_limit(field: str, values: list[str]) -> None:
+    assert len(getattr(_filters(**{field: values}), field)) == len(values)
+
+
+@pytest.mark.parametrize(
+    ("field", "values"),
+    [
+        ("work_mode", [WorkMode.REMOTE.value] * (len(WorkMode) + 1)),
+        ("source", [OfferSource.LINKEDIN.value] * (len(OfferSource) + 1)),
+        ("tag", [f"tag-{n}" for n in range(MAX_TAGS_PER_OFFER + 1)]),
+    ],
+    ids=["work-mode", "source", "tag"],
+)
+def test_repeatable_parameter_over_its_limit_is_rejected(field: str, values: list[str]) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        _filters(**{field: values})
+
+    assert [error["type"] for error in excinfo.value.errors()] == ["too_long"]

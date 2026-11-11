@@ -17,7 +17,16 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- Indexes on the foreign keys `job_offers.company_id` and `job_offer_tags.tag_id`
+  (migration `004`): filtering offers by company or tag no longer scans the whole table.
+- Schema tests: every foreign key must be indexed, and the migrations must match the
+  models exactly.
+
 ### Changed
+
+- Shared schema helpers moved from `job_tracker/utils.py` to
+  `job_tracker/schemas/fields.py`.
+- `mypy` (strict) also checks `tests/` and `migrations/`.
 
 ### Deprecated
 
@@ -25,7 +34,14 @@ the new version section, updates the links below and tags the commit.
 
 ### Fixed
 
+- "Get or create" a company no longer reports a company it cannot read back as inactive
+  (`409 company_inactive`); the original database error is raised instead.
+- The description of migration `001` is lower-case, like the others.
+
 ### Security
+
+- The repeatable filters `work_mode` and `source` of `GET /job-offers` accept at most as
+  many values as their enumeration has, so a request cannot send thousands of them.
 
 ## [0.5.1] - 2026-11-11
 

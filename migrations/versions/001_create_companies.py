@@ -1,4 +1,4 @@
-"""Create companies
+"""create companies
 
 Revision ID: 001
 Revises:

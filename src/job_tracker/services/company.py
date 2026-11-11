@@ -101,9 +101,13 @@ class CompanyService:
                 if violated_constraint(exc) != UNIQUE_NAME_INDEX:
                     raise
                 company = await self.repository.get_by_name(data.name)
+                if company is None:
+                    # The conflicting company cannot be read back; companies are never
+                    # deleted (D-04), so this is a bug, reported as the original error.
+                    raise
             else:
                 await self.session.commit()
                 return company, True
-        if company is None or not company.is_active:
+        if not company.is_active:
             raise CompanyInactiveError(f"Company with name {data.name} is inactive")
         return company, False

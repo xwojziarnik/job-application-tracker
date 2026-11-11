@@ -6,12 +6,16 @@ throwaway declarative base, so no test table ends up in the application's metada
 
 import uuid
 
-from sqlalchemy import String, Uuid
+from sqlalchemy import String, Table, Uuid
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.schema import CreateTable
 
 from job_tracker.db.base import UUIDPrimaryKeyMixin
+
+# SQLAlchemy's dialect classes have no annotated __init__, hence the ignore.
+POSTGRESQL: Dialect = postgresql.dialect()  # type: ignore[no-untyped-call]
 
 
 class ScratchBase(DeclarativeBase):
@@ -24,6 +28,12 @@ class Thing(UUIDPrimaryKeyMixin, ScratchBase):
     name: Mapped[str] = mapped_column(String(50))
 
 
+def _things() -> Table:
+    """The table of ``Thing``; ``__table__`` is typed as any ``FromClause``."""
+    assert isinstance(Thing.__table__, Table)
+    return Thing.__table__
+
+
 def test_id_is_a_uuid_primary_key() -> None:
     column = Thing.__table__.c.id
 
@@ -34,11 +44,11 @@ def test_id_is_a_uuid_primary_key() -> None:
 
 def test_id_has_no_index_besides_the_primary_key() -> None:
     # The primary key constraint is already backed by a unique index.
-    assert Thing.__table__.indexes == set()
+    assert _things().indexes == set()
 
 
 def test_id_is_a_native_uuid_column_in_postgresql() -> None:
-    ddl = str(CreateTable(Thing.__table__).compile(dialect=postgresql.dialect()))
+    ddl = str(CreateTable(_things()).compile(dialect=POSTGRESQL))
 
     assert "id UUID NOT NULL" in ddl
 

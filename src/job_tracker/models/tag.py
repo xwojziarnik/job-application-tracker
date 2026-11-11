@@ -35,9 +35,11 @@ class Tag(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 # Links between offers and tags. A plain table, not a model: it has no columns of its own.
 # The composite primary key allows a tag on an offer only once. Deleting an offer deletes
 # its links (CASCADE) and keeps the tags; a tag used by an offer cannot be deleted (RESTRICT).
+# The primary key also serves lookups by job_offer_id; tag_id has its own index for the tag
+# filter of the offer list and the RESTRICT check.
 job_offer_tags: Table = Table(
     "job_offer_tags",
     Base.metadata,
     Column("job_offer_id", ForeignKey("job_offers.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag_id", ForeignKey("tags.id", ondelete="RESTRICT"), primary_key=True),
+    Column("tag_id", ForeignKey("tags.id", ondelete="RESTRICT"), primary_key=True, index=True),
 )

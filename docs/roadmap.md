@@ -128,8 +128,8 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   explicitly (`joinedload`/`selectinload`); tags sorted by name; `passive_deletes` for
   deleting offers (`test_job_offer_relationships.py`, written first).
 - [x] Job offer schemas: create, update (PATCH), read, with salary, URL and tag rules
-  (`schemas/job_offer.py`, shared helpers in `utils.py`; `test_job_offer_schemas.py`,
-  written first).
+  (`schemas/job_offer.py`, shared helpers in `utils.py`, since moved to
+  `schemas/fields.py`; `test_job_offer_schemas.py`, written first).
 - [x] Job offer repository: add, get with company and tags, update, delete, "get or create"
   tags with `INSERT ... ON CONFLICT DO NOTHING` (D-09) (`repositories/job_offer.py`;
   `test_job_offer_repository.py`, written first). The list with filters comes with the

@@ -53,7 +53,11 @@ class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint(f"({NO_SALARY}) OR ({COMPLETE_SALARY})", name="salary_range"),
     )
 
-    company_id: Mapped[UUID] = mapped_column(ForeignKey("companies.id", ondelete="RESTRICT"))
+    # Indexed: PostgreSQL does not index foreign keys, and the offers of a company are
+    # filtered by it (and checked by RESTRICT when a company is deleted).
+    company_id: Mapped[UUID] = mapped_column(
+        ForeignKey("companies.id", ondelete="RESTRICT"), index=True
+    )
     # Relationships are never loaded implicitly: in async code a lazy load would run a hidden
     # query and fail with MissingGreenlet. lazy="raise" turns a forgotten load into a clear
     # error; load them explicitly with joinedload(JobOffer.company) and
