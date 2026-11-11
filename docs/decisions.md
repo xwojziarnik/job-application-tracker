@@ -880,9 +880,9 @@ needs the existing tag names to avoid new spellings.
 |---|---|
 | `company_id` | offers of one company |
 | `work_mode` | repeatable; any of the given values (`?work_mode=remote&work_mode=hybrid`) |
-| `seniority` | one level, including the combined values that contain it: `mid` matches `junior_mid`, `mid` and `mid_senior` (D-15) |
+| `seniority` | one level, including the combined values that contain it: `mid` matches `junior_mid`, `mid` and `mid_senior` (D-15); a combined value matches only itself |
 | `tag` | repeatable; the offer has **all** of the given tags (names normalised like stored tags) |
-| `min_salary` + `currency` | offers that can pay at least this much: `salary_max >= min_salary` in that currency; offers without a salary are left out. `min_salary` without `currency` is rejected with `422` |
+| `min_salary` + `currency` | offers that can pay at least this much: `salary_max >= min_salary` in that currency; offers without a salary are left out. The two are given together: one without the other is rejected with `422` |
 | `source` | repeatable; any of the given offer sources |
 | `search` | a fragment of the title, regardless of case; `%` and `_` taken literally |
 | `include_inactive` | offers of inactive companies are hidden unless `true` (D-04) |

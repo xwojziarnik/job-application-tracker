@@ -10,12 +10,32 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from job_tracker.models import JobOffer, Tag
+from job_tracker.models import Company, JobOffer, Tag
+from job_tracker.schemas.job_offer import JobOfferFilters, JobOfferSort
+
+# How each sort order of the offer list translates into ORDER BY (D-21). The client picks a
+# key, never a column. Missing dates and salaries go last (PostgreSQL puts NULL first in a
+# descending order), and ``id`` breaks ties, so pages never repeat or skip offers (D-08).
+SORT_ORDERS: dict[JobOfferSort, tuple[ColumnElement[Any], ...]] = {
+    JobOfferSort.NEWEST: (
+        JobOffer.posted_on.desc().nulls_last(),
+        JobOffer.created_at.desc(),
+        JobOffer.id.asc(),
+    ),
+    JobOfferSort.SALARY: (
+        JobOffer.salary_max.desc().nulls_last(),
+        JobOffer.id.asc(),
+    ),
+    JobOfferSort.TITLE: (
+        func.lower(JobOffer.title).asc(),
+        JobOffer.id.asc(),
+    ),
+}
 
 
 class JobOfferRepository:
@@ -84,3 +104,57 @@ class JobOfferRepository:
         """Delete ``offer`` and flush; the database removes its tag links (CASCADE)."""
         await self.session.delete(offer)
         await self.session.flush()
+
+    async def list_offers(
+        self, filters: JobOfferFilters, limit: int, offset: int
+    ) -> tuple[list[JobOffer], int]:
+        """Return one page of offers matching ``filters`` and the number of all matches.
+
+        Every filter given adds a condition (AND). ``tag`` adds one ``EXISTS`` per name, so
+        an offer must have all of them without multiplying rows; the company is joined only
+        to leave out inactive ones. ``total`` is counted before sorting and paging; the page
+        is loaded with its company and tags (``selectinload``, so ``LIMIT`` counts offers).
+        """
+        query = select(JobOffer)
+
+        if not filters.include_inactive:
+            query = query.join(JobOffer.company).where(Company.is_active)
+        if filters.company_id:
+            query = query.where(JobOffer.company_id == filters.company_id)
+        if filters.work_mode:
+            query = query.where(JobOffer.work_mode.in_(filters.work_mode))
+        if filters.source:
+            query = query.where(JobOffer.source.in_(filters.source))
+        if filters.seniority:
+            query = query.where(JobOffer.seniority.in_(filters.seniority.matching()))
+        for name in filters.tag:
+            query = query.where(JobOffer.tags.any(Tag.name == name))
+        if filters.min_salary:
+            query = query.where(
+                JobOffer.salary_max >= filters.min_salary, JobOffer.currency == filters.currency
+            )
+        if filters.search:
+            query = query.where(JobOffer.title.icontains(filters.search, autoescape=True))
+
+        total = await self.session.scalar(select(func.count()).select_from(query.subquery()))
+
+        page = await self.session.scalars(
+            query.order_by(*SORT_ORDERS[filters.sort])
+            .limit(limit)
+            .offset(offset)
+            .options(joinedload(JobOffer.company), selectinload(JobOffer.tags))
+        )
+        return (list(page.all()), total or 0)
+
+    async def list_tags(self, search: str | None, limit: int, offset: int) -> tuple[list[str], int]:
+        """Return one page of tag names in alphabetical order and the number of all matches.
+
+        ``search`` matches a fragment of the name; ``%`` and ``_`` are taken literally.
+        """
+        query = select(Tag.name)
+        if search:
+            query = query.where(Tag.name.icontains(search, autoescape=True))
+
+        total = await self.session.scalar(select(func.count()).select_from(query.subquery()))
+        names = await self.session.scalars(query.order_by(Tag.name).limit(limit).offset(offset))
+        return (list(names.all()), total or 0)

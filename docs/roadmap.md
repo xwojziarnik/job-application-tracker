@@ -135,9 +135,10 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
   `test_job_offer_repository.py`, written first). The list with filters comes with the
   endpoints.
 - [x] Decide the endpoints and the offer list (D-21).
-- [ ] PR A (`feat/job-offer-endpoints`): `POST`, `GET /{id}`, `PATCH`, `DELETE` under
-  `/job-offers`, company summary in responses, API tests.
-- [ ] PR B: `GET /job-offers` with filters, sort and pagination (D-21), offers of inactive
+- [x] PR A (`feat/job-offer-crud-endpoints`): `POST`, `GET /{id}`, `PATCH`, `DELETE` under
+  `/job-offers`, company summary in responses (`CompanySummary`), API tests
+  (`test_job_offer_api.py`, written first).
+- [x] PR B: `GET /job-offers` with filters, sort and pagination (D-21), offers of inactive
   companies hidden by default, `GET /tags`, API tests; release `0.5.0`.
 
 ### Step 3: Application

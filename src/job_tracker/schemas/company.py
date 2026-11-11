@@ -36,6 +36,8 @@ CompanyWebsite = Annotated[
 
 
 class CompanyCreate(BaseModel):
+    """A new company, as sent by the client; a new company is always active."""
+
     name: CompanyName
     notes: CompanyNotes = None
     location: CompanyLocation = None
@@ -46,6 +48,8 @@ class CompanyCreate(BaseModel):
 
 
 class CompanyUpdate(BaseModel):
+    """Changes to a company (PATCH): only the fields sent; ``null`` clears optional ones."""
+
     name: CompanyName | None = None
     notes: CompanyNotes = None
     location: CompanyLocation = None
@@ -69,6 +73,8 @@ class CompanyUpdate(BaseModel):
 
 
 class CompanyRead(BaseModel):
+    """A company as returned by the API, built from the ORM model."""
+
     id: UUID
     name: str
     notes: str | None

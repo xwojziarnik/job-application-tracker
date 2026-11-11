@@ -21,17 +21,23 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ErrorDetail(BaseModel):
+    """One invalid field of a request: its path (e.g. ``tags.1``) and what is wrong."""
+
     field: str
     message: str
 
 
 class ErrorBody(BaseModel):
+    """The ``error`` object of an error response; ``details`` only for validation errors."""
+
     code: str
     message: str
     details: list[ErrorDetail] | None = None
 
 
 class ErrorResponse(BaseModel):
+    """Every error response: ``{"error": {...}}`` (D-13); also documents errors in OpenAPI."""
+
     error: ErrorBody
 
 

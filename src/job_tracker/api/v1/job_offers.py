@@ -15,9 +15,10 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from job_tracker.api.deps import JobOfferServiceDep
+from job_tracker.api.deps import JobOfferFiltersDep, JobOfferServiceDep, PaginationDep
 from job_tracker.core.exceptions import ErrorResponse
 from job_tracker.schemas.job_offer import JobOfferCreate, JobOfferRead, JobOfferUpdate
+from job_tracker.schemas.pagination import Page
 
 router: APIRouter = APIRouter(
     prefix="/job-offers",
@@ -62,6 +63,28 @@ async def create_job_offer(data: JobOfferCreate, service: JobOfferServiceDep) ->
     """
     job_offer = await service.create_offer(data)
     return JobOfferRead.model_validate(job_offer)
+
+
+@router.get(path="")
+async def list_job_offers(
+    filters: JobOfferFiltersDep,
+    pagination: PaginationDep,
+    service: JobOfferServiceDep,
+) -> Page[JobOfferRead]:
+    """Return one page of job offers, the newest first unless `sort` says otherwise.
+
+    Filters are combined with AND. Repeated `work_mode` and `source` match any of the given
+    values; repeated `tag` requires all of them. `seniority=mid` also matches `junior_mid`
+    and `mid_senior`. `min_salary` (with `currency`) keeps offers whose maximum reaches it.
+    Offers of inactive companies are hidden unless `include_inactive=true`.
+    """
+    offers, total = await service.list_offers(filters, pagination.limit, pagination.offset)
+    return Page[JobOfferRead](
+        items=[JobOfferRead.model_validate(offer) for offer in offers],
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
 
 
 @router.get(path="/{job_offer_id}", responses=NOT_FOUND_RESPONSE)

@@ -22,7 +22,7 @@ from job_tracker.db.errors import violated_constraint
 from job_tracker.models import JobOffer
 from job_tracker.repositories.company import CompanyRepository
 from job_tracker.repositories.job_offer import JobOfferRepository
-from job_tracker.schemas.job_offer import JobOfferCreate, JobOfferUpdate
+from job_tracker.schemas.job_offer import JobOfferCreate, JobOfferFilters, JobOfferUpdate
 
 # Unique constraint on the normalised URL (naming convention uq_<table>_<column>);
 # violating it means the offer is already stored (D-05).
@@ -113,3 +113,13 @@ class JobOfferService:
         offer = await self.get_offer(offer_id)
         await self.offers.delete_offer(offer)
         await self.session.commit()
+
+    async def list_offers(
+        self, filters: JobOfferFilters, limit: int, offset: int
+    ) -> tuple[list[JobOffer], int]:
+        """Return one page of offers matching ``filters`` and the number of all matches."""
+        return await self.offers.list_offers(filters, limit, offset)
+
+    async def list_tags(self, search: str | None, limit: int, offset: int) -> tuple[list[str], int]:
+        """Return one page of tag names and the number of all matches."""
+        return await self.offers.list_tags(search, limit, offset)

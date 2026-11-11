@@ -6,6 +6,7 @@ entry. Members are ``StrEnum``, so ``WorkMode.REMOTE == "remote"``.
 """
 
 from enum import StrEnum
+from typing import Self
 
 
 class OfferSource(StrEnum):
@@ -35,6 +36,15 @@ class Seniority(StrEnum):
     SENIOR = "senior"
     SENIOR_LEAD = "senior_lead"
     LEAD = "lead"
+
+    def matching(self) -> list[Self]:
+        """Return the values an offer may have to match this level, in enum order (D-21).
+
+        A value matches when it contains every level of this one: ``mid`` matches
+        ``junior_mid``, ``mid`` and ``mid_senior``; a combined value matches only itself.
+        """
+        levels: set[str] = set(self.value.split("_"))
+        return [s for s in Seniority if levels.issubset(s.value.split("_"))]
 
 
 class WorkMode(StrEnum):

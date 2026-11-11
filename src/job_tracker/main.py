@@ -1,3 +1,5 @@
+"""Application factory and the ASGI application run by uvicorn."""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -11,10 +13,12 @@ from job_tracker.db.session import create_engine, create_sessionmaker
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    """Build the application; tests pass their own ``settings`` (e.g. their own database)."""
     settings = settings or get_settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        """Create the database engine on startup and close its connections on shutdown."""
         engine = create_engine(settings)
         app.state.sessionmaker = create_sessionmaker(engine)
         yield
