@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 import pytest
 from sqlalchemy import select
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from job_tracker.core.exceptions import (
@@ -273,3 +274,20 @@ async def test_get_or_create_returns_a_company_created_concurrently(
     assert created is False
     assert company.name == "ACME"
     assert set(await _stored(engine)) == {"ACME"}
+
+
+async def test_get_or_create_does_not_call_a_missing_company_inactive(
+    service: CompanyService, engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The insert fails on the unique index, but the company cannot be read back (it should
+    # never happen: companies are not deleted, D-04). The original database error is
+    # raised (500), not a misleading "company is inactive" (409).
+    async def lookup_that_always_misses(name: str) -> Company | None:
+        if not await _stored(engine):
+            await _insert(engine, Company(name="ACME"))
+        return None
+
+    monkeypatch.setattr(service.repository, "get_by_name", lookup_that_always_misses)
+
+    with pytest.raises(IntegrityError, match="uq_companies_lower_name"):
+        await service.get_or_create_company(_create("acme"))
