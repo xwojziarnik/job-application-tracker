@@ -17,6 +17,20 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.2] - 2026-11-11
+
+### Added
+
 - Indexes on the foreign keys `job_offers.company_id` and `job_offer_tags.tag_id`
   (migration `004`): filtering offers by company or tag no longer scans the whole table.
 - Schema tests: every foreign key must be indexed, and the migrations must match the
@@ -27,10 +41,6 @@ the new version section, updates the links below and tags the commit.
 - Shared schema helpers moved from `job_tracker/utils.py` to
   `job_tracker/schemas/fields.py`.
 - `mypy` (strict) also checks `tests/` and `migrations/`.
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -238,7 +248,8 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.3.0...v0.4.0
