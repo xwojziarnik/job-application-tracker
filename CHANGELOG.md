@@ -17,6 +17,20 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.0] - 2026-11-11
+
+### Added
+
 - `job_offers` table: company, title, URL, source, seniority, work mode, location,
   salary range with currency, posting date, description and notes. The database itself
   rejects values outside the enumerations, an incomplete or invalid salary range (all of
@@ -59,7 +73,6 @@ the new version section, updates the links below and tags the commit.
   - `PATCH /job-offers/{job_offer_id}` changes only the fields sent (`422 invalid_salary`,
     `409 job_offer_already_exists`);
   - `DELETE /job-offers/{job_offer_id}` deletes an offer (`204`); its tags stay.
-
   Every offer response carries a summary of its company (`id`, `name`, `is_active`).
 - Offer list `GET /api/v1/job-offers` with pagination and filters: `company_id`,
   `work_mode` and `source` (repeatable, any of), `seniority` (`mid` also matches
@@ -73,12 +86,6 @@ the new version section, updates the links below and tags the commit.
 
 - `make test`, `make test-unit` and `make test-integration` accept `t=` (a test file,
   directory or single test) and `k=` (a filter on test names) to run only some tests.
-
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ### Security
 
@@ -194,7 +201,8 @@ the new version section, updates the links below and tags the commit.
   GitHub Actions pinned to commit SHAs.
 - Automated releases: version bump with hatch and changelog update on `main`.
 
-[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/xwojziarnik/job-application-tracker/compare/v0.1.1...v0.2.0
