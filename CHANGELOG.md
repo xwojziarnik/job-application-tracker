@@ -17,7 +17,16 @@ the new version section, updates the links below and tags the commit.
 
 ### Added
 
+- Applications, part 1: the `applications` table (migration `005`) and the
+  `ApplicationStatus` enumeration with the statuses of D-16. An offer can have many
+  applications over time but at most one active one (partial unique index, D-06); a draft
+  has no sent date; the expected salary is B2B net per month with its currency, all or
+  nothing (D-03); deleting an offer deletes its applications. Not exposed in the API yet.
+
 ### Changed
+
+- The schema test no longer counts a partial index as the index of a foreign key, since it
+  covers only some rows.
 
 ### Deprecated
 

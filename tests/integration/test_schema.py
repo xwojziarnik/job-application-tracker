@@ -39,9 +39,12 @@ def _unindexed_foreign_keys(connection: Connection) -> list[str]:
     for table in inspector.get_table_names():
         if table == "alembic_version":
             continue
-        # Columns of each index; None stands for an expression, e.g. lower(name).
+        # Columns of each index; None stands for an expression, e.g. lower(name). A partial
+        # index (WHERE ...) covers only some rows, so it does not count.
         leading_columns: list[Sequence[str | None]] = [
-            index["column_names"] for index in inspector.get_indexes(table)
+            index["column_names"]
+            for index in inspector.get_indexes(table)
+            if "postgresql_where" not in index.get("dialect_options", {})
         ]
         leading_columns.append(inspector.get_pk_constraint(table)["constrained_columns"])
         for foreign_key in inspector.get_foreign_keys(table):

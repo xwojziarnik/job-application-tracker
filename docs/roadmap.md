@@ -143,9 +143,14 @@ Suggested order (test infrastructure first, so the rest can be tested on a real 
 
 ### Step 3: Application
 
-- [ ] Decide required/optional fields and PATCH semantics.
-- [ ] Model: offer FK `CASCADE`, status (D-16), sent date as `DATE` (D-11).
-- [ ] Partial unique index: one active application per offer (D-06, D-16).
+- [x] Decide required/optional fields and PATCH semantics (see "Deferred to each
+  model" → "Application" in `decisions.md`).
+- [x] Model and migration `005`: offer FK `CASCADE`, status (D-16) with `ApplicationStatus.final()`
+  as the single list of final statuses, sent date as `DATE` (D-11), no sent date for a
+  draft, expected salary all or nothing (D-03). Tests written first (`test_enums.py`,
+  `test_application_model.py`).
+- [x] Partial unique index `uq_applications_active_job_offer_id`: one active application
+  per offer (D-06, D-16), plus a full index on `job_offer_id` for `CASCADE`.
 - [ ] Status set on creation, not editable through `PATCH` (workflow comes in stage 3).
 - [ ] Validation: sent date not in the future (in `Europe/Warsaw`), not before the offer's
   posting date (D-11).
