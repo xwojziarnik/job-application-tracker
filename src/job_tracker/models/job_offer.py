@@ -7,13 +7,12 @@ be deleted (D-04).
 """
 
 from datetime import date
-from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint, Date, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from job_tracker.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from job_tracker.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, enum_values
 from job_tracker.enums import Currency, OfferSource, Seniority, WorkMode
 from job_tracker.models.company import Company
 from job_tracker.models.tag import Tag, job_offer_tags
@@ -25,16 +24,6 @@ COMPLETE_SALARY: str = (
     "salary_min IS NOT NULL AND salary_max IS NOT NULL AND currency IS NOT NULL"
     " AND salary_min > 0 AND salary_min <= salary_max"
 )
-
-
-def _enum_values(enum_class: type[StrEnum]) -> list[str]:
-    """Return the values of ``enum_class``, e.g. ``["remote", "hybrid", "office"]``.
-
-    Passed as ``values_callable`` to SQLAlchemy's ``Enum``, so the database stores and
-    checks the values (``"mid_senior"``) instead of the member names (``"MID_SENIOR"``),
-    which SQLAlchemy uses by default (D-02).
-    """
-    return [e.value for e in enum_class]
 
 
 class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -81,7 +70,7 @@ class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             native_enum=False,
             create_constraint=True,
             name="source",
-            values_callable=_enum_values,
+            values_callable=enum_values,
         )
     )
     seniority: Mapped[Seniority] = mapped_column(
@@ -91,7 +80,7 @@ class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             native_enum=False,
             create_constraint=True,
             name="seniority",
-            values_callable=_enum_values,
+            values_callable=enum_values,
         )
     )
     work_mode: Mapped[WorkMode] = mapped_column(
@@ -101,7 +90,7 @@ class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             native_enum=False,
             create_constraint=True,
             name="work_mode",
-            values_callable=_enum_values,
+            values_callable=enum_values,
         )
     )
     salary_min: Mapped[int | None] = mapped_column()
@@ -113,7 +102,7 @@ class JobOffer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             native_enum=False,
             create_constraint=True,
             name="currency",
-            values_callable=_enum_values,
+            values_callable=enum_values,
         )
     )
     posted_on: Mapped[date | None] = mapped_column(Date())

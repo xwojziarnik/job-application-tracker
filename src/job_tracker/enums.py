@@ -61,3 +61,39 @@ class Currency(StrEnum):
     PLN = "PLN"
     EUR = "EUR"
     USD = "USD"
+
+
+class ApplicationStatus(StrEnum):
+    """Stage of an application: eight active statuses, then four final ones (D-16).
+
+    An application is active while its status is not final; an offer can have at most one
+    active application (D-06). ``on_hold`` is active: a paused recruitment can continue.
+    """
+
+    DRAFT = "draft"
+    APPLIED = "applied"
+    SCREENING = "screening"
+    TECHNICAL = "technical"
+    TASK = "task"
+    FINAL = "final"
+    OFFER = "offer"
+    ON_HOLD = "on_hold"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    WITHDRAWN = "withdrawn"
+    GHOSTED = "ghosted"
+
+    @classmethod
+    def final(cls) -> list[Self]:
+        """Return the statuses that end a recruitment, in enum order (D-16).
+
+        The only list of final statuses: the partial unique index of ``applications``
+        (one active application per offer, D-06) is built from it, so changing it needs a
+        migration.
+        """
+        return [cls.ACCEPTED, cls.REJECTED, cls.WITHDRAWN, cls.GHOSTED]
+
+    @property
+    def is_final(self) -> bool:
+        """Whether this status ends the recruitment (see ``final``)."""
+        return self in self.final()

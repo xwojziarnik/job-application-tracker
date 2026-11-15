@@ -6,6 +6,7 @@ columns come first and the mixins' columns after them.
 """
 
 from datetime import datetime
+from enum import StrEnum
 from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
@@ -52,3 +53,13 @@ class UUIDPrimaryKeyMixin:
     """
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+
+
+def enum_values(enum_class: type[StrEnum]) -> list[str]:
+    """Return the values of ``enum_class``, e.g. ``["remote", "hybrid", "office"]``.
+
+    Passed as ``values_callable`` to SQLAlchemy's ``Enum``, so the database stores and
+    checks the values (``"mid_senior"``) instead of the member names (``"MID_SENIOR"``),
+    which SQLAlchemy uses by default (D-02).
+    """
+    return [e.value for e in enum_class]

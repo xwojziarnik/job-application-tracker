@@ -8,7 +8,7 @@ Tables and the relationships between them. Decisions referenced as `D-XX` are in
 | `companies` | Implemented (stage 2, step 1) |
 | `job_offers` | Implemented (stage 2, step 2) |
 | `tags`, `job_offer_tags` | Implemented (stage 2, step 2) |
-| `applications` | Planned (stage 2, step 3) |
+| `applications` | Model and migration done (stage 2, step 3); endpoints planned |
 | `cv_documents` (files in SeaweedFS) | Planned (stage 2, step 4, D-19) |
 
 Columns of the planned tables are a sketch based on the decisions so far; their exact
@@ -70,8 +70,11 @@ erDiagram
         uuid id PK
         uuid job_offer_id FK "one active per offer"
         uuid cv_document_id FK "nullable"
-        varchar status "D-16"
-        date sent_on "nullable"
+        varchar status "D-16, default applied"
+        date sent_on "nullable, empty for draft"
+        int expected_salary "nullable, B2B net per month"
+        varchar currency "with expected_salary"
+        varchar notes "nullable"
     }
 
     cv_documents {
@@ -103,7 +106,7 @@ only for the implemented tables to keep the diagram readable.
 | `companies` | name, regardless of case | unique index `uq_companies_lower_name` on `lower(name)` | D-05 |
 | `job_offers` | normalised URL | unique constraint `uq_job_offers_url` | D-05 |
 | `tags` | normalised name | unique constraint `uq_tags_name` | D-09 |
-| `applications` | one active application per offer | partial unique index on `job_offer_id` for non-final statuses | D-06, D-16 |
+| `applications` | one active application per offer | partial unique index `uq_applications_active_job_offer_id` on `job_offer_id` for non-final statuses | D-06, D-16 |
 | `cv_documents` | file content (`sha256`) and object key | unique constraints | D-19 |
 
 ## Foreign key indexes
@@ -118,6 +121,7 @@ when a new foreign key has none.
 | `job_offers` | `company_id` | `ix_job_offers_company_id` |
 | `job_offer_tags` | `job_offer_id` | primary key `pk_job_offer_tags` (`job_offer_id`, `tag_id`) |
 | `job_offer_tags` | `tag_id` | `ix_job_offer_tags_tag_id` |
+| `applications` | `job_offer_id` | `ix_applications_job_offer_id` (the partial unique index covers only active applications) |
 
 ## Check constraints
 
@@ -132,6 +136,10 @@ Names follow the naming convention in `db/base.py` (`ck_<table>_<name>`).
 | `job_offers` | `ck_job_offers_currency` | `currency` is `PLN`, `EUR` or `USD` | D-02, D-14 |
 | `tags` | `ck_tags_name_format` | `name` contains only `a-z`, `0-9`, `.`, `+`, `#`, `-` and at least one letter or digit | D-09 |
 | `job_offers` | `ck_job_offers_salary_range` | no salary at all, or `salary_min`, `salary_max` and `currency` all set with `0 < salary_min <= salary_max` | D-03 |
+| `applications` | `ck_applications_status` | `status` is one of the application statuses | D-02, D-16 |
+| `applications` | `ck_applications_currency` | `currency` is `PLN`, `EUR` or `USD` | D-02, D-14 |
+| `applications` | `ck_applications_draft_not_sent` | a `draft` has no `sent_on` | decisions: "Application" |
+| `applications` | `ck_applications_expected_salary` | no expected salary, or `expected_salary > 0` with its `currency` | D-03 |
 
 Enumerations store their values (`mid_senior`), not the Python member names
 (`MID_SENIOR`), so SQL, the API and the code use the same strings (D-02).

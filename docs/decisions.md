@@ -1061,3 +1061,46 @@ when made:
   Tags are not deleted through the API.
 - **Tags have no endpoint of their own** except `GET /tags`; they are created with the
   offers that use them ("get or create" with `INSERT ... ON CONFLICT DO NOTHING`, D-09).
+
+### Application (2026-11-15)
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | UUID | set by the app | `UUIDPrimaryKeyMixin` (D-01) |
+| `job_offer_id` | UUID | yes | Foreign key with `ON DELETE CASCADE` (D-04); the offer's company must be active (D-10); cannot be changed after creation |
+| `status` | enumeration | no, default `applied` | The statuses of D-16; set only on creation in stage 2 |
+| `sent_on` | date | depends on the status | `DATE` (D-11); empty for `draft`, optional otherwise; not in the future (`Europe/Warsaw`); not before the offer's `posted_on` |
+| `expected_salary` | integer | no | The owner's expectation, B2B net per month in whole currency units (D-03); positive |
+| `currency` | enumeration | with the expected salary | `PLN`, `EUR`, `USD` (D-14); required when `expected_salary` is given, empty otherwise |
+| `notes` | text, up to 2000 characters | no | The owner's own notes |
+| `created_at`, `updated_at` | timestamp | set by the database | `TimestampMixin` (D-11) |
+
+- **One active application per offer** (D-06): a partial unique index on `job_offer_id`
+  for rows whose status is not final (`accepted`, `rejected`, `withdrawn`, `ghosted`,
+  D-16). The final statuses are defined once, in `ApplicationStatus`, and the index
+  condition is built from them. A second active application returns
+  `409 application_already_active`; the index also catches concurrent requests.
+- **Any status on creation**, so past applications can be recorded as they ended (e.g.
+  directly as `rejected`). The default is `applied`: most applications are recorded after
+  they were sent.
+- **A draft has no sent date:** `sent_on` must be empty for `draft` (schema and a `CHECK`
+  constraint); for other statuses it is optional, since the date of an old application
+  may be unknown.
+- **Sent date checks:** not in the future in `Europe/Warsaw` (schema, as `posted_on` of an
+  offer); not before the offer's `posted_on` when both are known (service, since it needs
+  the offer). Both apply on create and on update.
+- **Expected salary is all or nothing:** `expected_salary` and `currency` are both set or
+  both empty (schema and a `CHECK` constraint), as the salary of an offer.
+- **Blank text in optional fields** is stored as `null`; all text fields are trimmed.
+- **Create** (`POST`) accepts `job_offer_id`, `status`, `sent_on`, `expected_salary`,
+  `currency` and `notes`. An offer that does not exist returns `404`; an offer of an
+  inactive company returns `409 company_inactive` (D-10).
+- **Update** (`PATCH`): an omitted field is not changed; `null` clears an optional field.
+  `status` and `job_offer_id` are not accepted (`422`): the status workflow comes in stage
+  3, and an application added to the wrong offer is deleted and added again. The
+  expected salary rule and the sent date checks apply to the application after the
+  update, as for the salary of an offer.
+- **Delete** (`DELETE`) removes the application for good and returns `204`; deleting an
+  offer deletes its applications (`ON DELETE CASCADE`).
+- **Read and list:** the response shape, filters and sort order are decided with the
+  endpoints.
